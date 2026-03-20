@@ -1939,18 +1939,21 @@ button { cursor: pointer; }
 }
 
 .liquid-node:hover,
-.liquid-node:focus-within {
+.liquid-node:focus-within,
+.liquid-node.is-active {
   z-index: 20;
 }
 
 .liquid-node:hover .liquid-node-aura,
-.liquid-node:focus-within .liquid-node-aura {
+.liquid-node:focus-within .liquid-node-aura,
+.liquid-node.is-active .liquid-node-aura {
   opacity: 1;
   transform: scale(1.12);
 }
 
 .liquid-node:hover .liquid-node-body,
-.liquid-node:focus-within .liquid-node-body {
+.liquid-node:focus-within .liquid-node-body,
+.liquid-node.is-active .liquid-node-body {
   transform: scale(1.08);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
@@ -1958,7 +1961,8 @@ button { cursor: pointer; }
 }
 
 .liquid-node:hover .liquid-node-info,
-.liquid-node:focus-within .liquid-node-info {
+.liquid-node:focus-within .liquid-node-info,
+.liquid-node.is-active .liquid-node-info {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
   pointer-events: auto;
@@ -2317,7 +2321,8 @@ button { cursor: pointer; }
 }
 
 .liquid-node:hover::after,
-.liquid-node:focus-within::after {
+.liquid-node:focus-within::after,
+.liquid-node.is-active::after {
   opacity: 1;
   transform: scale(1.4);
 }
@@ -2540,5 +2545,524 @@ button { cursor: pointer; }
   .liquid-node-ring,
   .sequence-bits {
     opacity: 0.5;
+  }
+}
+
+/* ===== mobile archive fix ===== */
+@media (max-width: 640px) {
+  .archive-view {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .tear-sea-field.liquid-sea-field {
+    min-height: 1480px;
+    border-radius: 22px;
+    overflow: hidden;
+  }
+
+  .liquid-node {
+    width: calc(var(--node-size) * 0.82);
+    height: calc(var(--node-size) * 0.82);
+  }
+
+  .liquid-node-info {
+    left: 50%;
+    top: calc(100% + 10px);
+    transform: translateX(-50%) translateY(8px);
+    width: min(76vw, 260px);
+    max-width: 260px;
+    padding: 12px;
+    border-radius: 16px;
+    z-index: 50;
+  }
+
+  .liquid-node:hover .liquid-node-info,
+  .liquid-node:focus-within .liquid-node-info,
+  .liquid-node.is-active .liquid-node-info {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+
+  .liquid-node.is-active {
+    z-index: 60 !important;
+  }
+
+  .liquid-node-info p {
+    font-size: 12px;
+    line-height: 1.42;
+    word-break: break-word;
+  }
+
+  .liquid-node-meta {
+    gap: 6px;
+    font-size: 10px;
+  }
+
+  .liquid-resonance-btn {
+    min-height: 38px;
+    font-size: 12px;
+  }
+
+  .sea-link-layer {
+    opacity: 0.42;
+  }
+}
+
+/* ===== mobile gate / forge refinement ===== */
+.gate-lang-toggle {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 40;
+}
+
+@media (max-width: 900px) {
+  .gate-shell {
+    padding: 20px 16px 24px;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100svh;
+  }
+
+  .gate-lang-toggle {
+    top: max(12px, env(safe-area-inset-top));
+    right: 12px;
+  }
+
+  .gate-content {
+    width: min(100%, 620px);
+    margin-top: clamp(72px, 14vh, 120px);
+    padding: 22px 18px 18px;
+    border-radius: 24px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+      rgba(5, 8, 18, 0.36);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(14px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 20px 60px rgba(0, 0, 0, 0.28);
+  }
+
+  .gate-kicker {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    margin-bottom: 12px;
+  }
+
+  .gate-title {
+    font-size: clamp(2rem, 9vw, 3.4rem);
+    line-height: 0.98;
+    letter-spacing: 0.01em;
+    margin-bottom: 18px;
+  }
+
+  .gate-line {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .gate-actions {
+    margin-top: 22px;
+    gap: 10px;
+  }
+
+  .gate-button {
+    min-height: 48px;
+    min-width: 120px;
+    padding: 12px 18px;
+  }
+
+  .gate-status {
+    margin-top: 14px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 640px) {
+  .gate-shell {
+    padding: 14px 12px 20px;
+  }
+
+  .gate-lang-toggle {
+    top: max(10px, env(safe-area-inset-top));
+    right: 10px;
+  }
+
+  .gate-content {
+    margin-top: clamp(72px, 12vh, 108px);
+    width: 100%;
+    padding: 18px 14px 14px;
+    border-radius: 20px;
+  }
+
+  .gate-title {
+    font-size: clamp(1.85rem, 11vw, 2.7rem);
+  }
+
+  .gate-line {
+    font-size: 13px;
+  }
+
+  .gate-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .gate-button {
+    width: 100%;
+  }
+}
+
+/* ===== forge mobile refinement ===== */
+@media (max-width: 900px) {
+  .lang-toggle.floating {
+    top: max(12px, env(safe-area-inset-top));
+    right: 12px;
+    z-index: 60;
+  }
+
+  .forge-view {
+    padding-top: clamp(72px, 10vh, 108px);
+    gap: 14px;
+  }
+
+  .forge-copy,
+  .forge-vessel,
+  .forge-input-panel {
+    padding: 18px 16px;
+  }
+
+  .forge-copy {
+    order: 1;
+  }
+
+  .forge-vessel {
+    order: 2;
+    min-height: 520px;
+  }
+
+  .forge-input-panel {
+    order: 3;
+  }
+
+  .forge-title {
+    font-size: clamp(2rem, 8vw, 2.8rem);
+    line-height: 0.96;
+    margin-bottom: 14px;
+  }
+
+  .forge-body {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .system-readout {
+    gap: 10px;
+  }
+
+  .system-readout > div {
+    min-height: 62px;
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+
+  .watcher-line {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .vessel-preview-copy {
+    padding-bottom: 10px;
+  }
+
+  .vessel-preview-copy span {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+  }
+
+  .vessel-preview-copy strong {
+    font-size: 15px;
+    line-height: 1.35;
+    max-width: 18ch;
+    display: inline-block;
+  }
+
+  .vessel-canvas-wrap {
+    min-height: 340px;
+    border-radius: 20px;
+  }
+
+  .vessel-inner-rim {
+    inset: 10px;
+    border-radius: 20px;
+  }
+
+  .vessel-fluid-skin,
+  .vessel-fluid-skin-2 {
+    left: 6%;
+    right: 6%;
+  }
+
+  .forge-actions-row {
+    gap: 10px;
+  }
+
+  .forge-status-stack {
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .micro-status {
+    min-height: 70px;
+    padding: 12px 14px;
+  }
+
+  .extract-overlay {
+    min-height: 220px;
+  }
+
+  .extract-preview-shell {
+    min-height: 136px;
+  }
+
+  .extract-preview {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .extract-loss {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .extract-editor {
+    min-height: 92px;
+    font-size: 15px;
+  }
+
+  .extract-submit,
+  .voice-button {
+    min-height: 46px;
+  }
+}
+
+@media (max-width: 640px) {
+  .lang-toggle.floating {
+    top: max(10px, env(safe-area-inset-top));
+    right: 10px;
+  }
+
+  .lang-toggle .ghost-btn,
+  .lang-toggle.floating .ghost-btn {
+    min-width: 52px;
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+
+  .forge-view {
+    padding: max(12px, env(safe-area-inset-top)) 12px 16px;
+    padding-top: max(70px, calc(env(safe-area-inset-top) + 52px));
+    gap: 12px;
+  }
+
+  .forge-copy,
+  .forge-vessel,
+  .forge-input-panel {
+    padding: 14px 12px;
+    border-radius: 18px;
+  }
+
+  .forge-title {
+    font-size: clamp(1.8rem, 11vw, 2.4rem);
+    margin-bottom: 10px;
+  }
+
+  .forge-body {
+    font-size: 13px;
+  }
+
+  .system-readout {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .system-readout > div {
+    min-height: 56px;
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+
+  .forge-vessel {
+    min-height: 430px;
+  }
+
+  .vessel-preview {
+    gap: 8px;
+  }
+
+  .vessel-preview-copy strong {
+    font-size: 14px;
+    max-width: 16ch;
+  }
+
+  .vessel-canvas-wrap {
+    min-height: 280px;
+    border-radius: 18px;
+  }
+
+  .vessel-inner-rim {
+    inset: 8px;
+    border-radius: 18px;
+  }
+
+  .vessel-top-glass {
+    width: 54%;
+    left: 8%;
+    height: 12%;
+  }
+
+  .vessel-canvas-wrap::after {
+    left: 6%;
+    right: 6%;
+    height: 20%;
+    bottom: 5%;
+  }
+
+  .vessel-halo {
+    inset: 18% 16% 18% 16%;
+    filter: blur(24px);
+  }
+
+  .vessel-fluid-skin {
+    top: 20%;
+    bottom: 24%;
+  }
+
+  .vessel-fluid-skin-2 {
+    top: 26%;
+    bottom: 16%;
+  }
+
+  .forge-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .forge-status-stack {
+    grid-template-columns: 1fr;
+  }
+
+  .micro-status {
+    min-height: 60px;
+    padding: 10px 12px;
+  }
+
+  .extract-overlay {
+    min-height: 196px;
+    border-radius: 16px;
+  }
+
+  .extract-preview-shell {
+    min-height: 118px;
+  }
+
+  .extract-preview {
+    font-size: 14px;
+  }
+
+  .extract-loss {
+    font-size: 11px;
+  }
+
+  .extract-editor {
+    min-height: 84px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .extract-submit,
+  .voice-button,
+  .ghost-btn,
+  .generate-btn {
+    min-height: 44px;
+    border-radius: 12px;
+  }
+
+  .watcher-line {
+    margin-top: 10px;
+    font-size: 11px;
+  }
+}
+
+/* ===== subtle forge polish ===== */
+.system-readout > div,
+.micro-status {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.012);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 10px 30px rgba(0, 0, 0, 0.16);
+}
+
+.forge-input-panel {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(138, 160, 255, 0.05), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.012));
+}
+
+.forge-copy {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(180, 196, 255, 0.05), transparent 20%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.024), rgba(255, 255, 255, 0.012));
+}
+
+/* ===== safer viewport for iPhone ===== */
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+.app-shell,
+.gate-shell {
+  min-height: 100svh;
+}
+
+.liquid-node-meta-secondary {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  opacity: 0.86;
+}
+
+.liquid-node-meta-secondary {
+  margin-top: 6px;
+  opacity: 0.58;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.featured-meta span:last-child {
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .liquid-node-meta-secondary {
+    font-size: 9px;
+  }
+
+  .liquid-node-info {
+    backdrop-filter: blur(16px);
   }
 }

@@ -20,6 +20,7 @@ const COPY = {
     localResidue: 'local residue',
     noTears: 'No visible tears yet.',
     resonate: 'resonate',
+    systemClass: 'system class',
   },
   zh: {
     kicker: '共享身体 / 不稳定水域',
@@ -37,12 +38,30 @@ const COPY = {
     localResidue: '本地残留',
     noTears: '此刻还没有可见泪滴。',
     resonate: '共振',
+    systemClass: '系统类别',
   },
 }
 
-function createNodeLayout(index) {
-  const baseX = 10 + ((index * 13.7) % 78)
-  const baseY = 8 + ((index * 19.3) % 76)
+function createNodeLayout(index, isMobile) {
+  if (isMobile) {
+    const col = index % 2
+    const row = Math.floor(index / 2)
+
+    return {
+      x: col === 0 ? 32 : 68,
+      y: 12 + row * 11.5,
+      size: 78 + ((index * 11) % 44),
+      drift: 6 + (index % 4) * 3,
+      delay: (index % 8) * 0.45,
+      duration: 9 + (index % 6) * 1.8,
+      blur: 12 + (index % 5) * 4,
+      opacity: 0.2 + (index % 4) * 0.05,
+      z: 2 + (index % 4),
+    }
+  }
+
+  const baseX = 12 + ((index * 13.7) % 76)
+  const baseY = 10 + ((index * 17.5) % 74)
   const size = 84 + ((index * 17) % 86)
   const drift = 8 + (index % 5) * 4
   const delay = (index % 9) * 0.6
@@ -51,7 +70,7 @@ function createNodeLayout(index) {
   const opacity = 0.18 + (index % 5) * 0.06
 
   return {
-    x: Math.min(baseX, 88),
+    x: Math.min(baseX, 86),
     y: Math.min(baseY, 84),
     size,
     drift,
@@ -110,6 +129,10 @@ function TearLibrary({
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('latest')
   const [remoteError, setRemoteError] = useState('')
+  const [activeNode, setActiveNode] = useState(null)
+  const [isCompactViewport, setIsCompactViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= 640 : false
+  )
 
   const endpoint =
     filter === 'latest'
@@ -138,6 +161,18 @@ function TearLibrary({
 
     fetchTears()
   }, [copy.remoteFail, endpoint, refreshKey])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const syncViewport = () => {
+      setIsCompactViewport(window.innerWidth <= 640)
+    }
+
+    syncViewport()
+    window.addEventListener('resize', syncViewport)
+    return () => window.removeEventListener('resize', syncViewport)
+  }, [])
 
   const allTears = useMemo(() => {
     const merged = [...tears, ...localTears]
@@ -171,21 +206,58 @@ function TearLibrary({
     () =>
       field.map((tear, index) => ({
         tear,
-        layout: createNodeLayout(index),
+        layout: createNodeLayout(index, isCompactViewport),
       })),
-    [field]
+    [field, isCompactViewport]
   )
   const links = useMemo(() => buildLinks(renderedNodes), [renderedNodes])
 
-  const handleLike = async (id) => {
-    setTears((current) =>
-      current.map((tear) =>
-        tear._id === id ? { ...tear, likes: (tear.likes || 0) + 1 } : tear
-      )
+  useEffect(() => {
+    if (!activeNode) return
+
+    const stillVisible = renderedNodes.some(
+      ({ tear }) => tear.tearId === activeNode
     )
 
+    if (!stillVisible) {
+      setActiveNode(null)
+    }
+  }, [activeNode, renderedNodes])
+
+  const handleLike = async (tear) => {
+    const targetId = tear._id || tear.tearId
+
+    setTears((current) => {
+      const hasMatch = current.some(
+        (item) => (item._id || item.tearId) === targetId
+      )
+
+      if (!hasMatch) {
+        return [
+          {
+            ...tear,
+            likes: (tear.likes || 0) + 1,
+            source: tear.source || (tear._id ? 'remote' : 'local'),
+          },
+          ...current,
+        ]
+      }
+
+      return current.map((item) =>
+        (item._id || item.tearId) === targetId
+          ? { ...item, likes: (item.likes || 0) + 1 }
+          : item
+      )
+    })
+
+    if (!tear._id) {
+      return
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/tears/${id}/like`, { method: 'POST' })
+      const response = await fetch(`${API_URL}/api/tears/${tear._id}/like`, {
+        method: 'POST',
+      })
       if (!response.ok) {
         throw new Error(`like failed with status ${response.status}`)
       }
@@ -243,7 +315,7 @@ function TearLibrary({
               </span>
               <span>
                 {featured.systemGenerated
-                  ? copy.unknownSource
+                  ? featured.name || copy.unknownSource
                   : copy.recoveredFragment}
               </span>
             </div>
@@ -255,7 +327,10 @@ function TearLibrary({
         </article>
       ) : null}
 
-      <div className="tear-sea-field liquid-sea-field">
+      <div
+        className="tear-sea-field liquid-sea-field"
+        onClick={() => setActiveNode(null)}
+      >
         <div className="sea-depth-glow" />
         <div className="sea-fog-layer fog-a" />
         <div className="sea-fog-layer fog-b" />
@@ -281,7 +356,7 @@ function TearLibrary({
           renderedNodes.map(({ tear, layout }) => (
             <article
               key={tear._id || tear.tearId}
-              className={`liquid-node ${tear.corrupted ? 'is-corrupted' : ''} ${tear.systemGenerated ? 'is-system' : ''}`}
+              className={`liquid-node ${tear.corrupted ? 'is-corrupted' : ''} ${tear.systemGenerated ? 'is-system' : ''} ${activeNode === tear.tearId ? 'is-active' : ''}`}
               style={{
                 '--node-x': `${layout.x}%`,
                 '--node-y': `${layout.y}%`,
@@ -292,6 +367,23 @@ function TearLibrary({
                 '--node-blur': `${layout.blur}px`,
                 '--node-opacity': layout.opacity,
                 '--node-z': layout.z,
+              }}
+              role="button"
+              tabIndex={0}
+              aria-expanded={activeNode === tear.tearId}
+              onClick={(event) => {
+                event.stopPropagation()
+                setActiveNode((current) =>
+                  current === tear.tearId ? null : tear.tearId
+                )
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  setActiveNode((current) =>
+                    current === tear.tearId ? null : tear.tearId
+                  )
+                }
               }}
             >
               <div className="liquid-node-aura" />
@@ -304,29 +396,36 @@ function TearLibrary({
 
               <div className="liquid-node-info">
                 <span className="tear-id">{tear.tearId}</span>
-                <p>
-                  {tear.text.length > 74 ? `${tear.text.slice(0, 74)}...` : tear.text}
-                </p>
+                <p>{tear.text.length > 74 ? `${tear.text.slice(0, 74)}...` : tear.text}</p>
+
                 <div className="liquid-node-meta">
                   <span>{tear.emotion}</span>
                   <span>
                     {tear.source === 'remote'
                       ? copy.publicSea
                       : tear.systemGenerated
-                        ? copy.unknownSource
+                        ? tear.name || copy.unknownSource
                         : copy.localResidue}
                   </span>
                 </div>
 
-                {tear._id && !tear.systemGenerated ? (
-                  <button
-                    type="button"
-                    className="resonance-btn liquid-resonance-btn"
-                    onClick={() => handleLike(tear._id)}
-                  >
-                    {copy.resonate} {tear.likes || 0}
-                  </button>
+                {tear.systemGenerated ? (
+                  <div className="liquid-node-meta liquid-node-meta-secondary">
+                    <span>{copy.systemClass}</span>
+                    <span>{tear.sourceType || 'synthetic'}</span>
+                  </div>
                 ) : null}
+
+                <button
+                  type="button"
+                  className="resonance-btn liquid-resonance-btn"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    void handleLike(tear)
+                  }}
+                >
+                  {copy.resonate} {tear.likes || 0}
+                </button>
               </div>
             </article>
           ))

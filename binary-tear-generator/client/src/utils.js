@@ -34,8 +34,14 @@ export const analyzeEmotion = (text) => {
 
 export const emotionColors = {
   sad: '#8faeff',
+  sadness: '#8faeff',
   angry: '#ff8b9b',
   happy: '#ffd3a8',
   anxious: '#c3b9ff',
+  anxiety: '#c3b9ff',
+  fear: '#aeb7ff',
   neutral: '#bce8ff',
+  void: '#9fb5c7',
+  despair: '#7c5d89',
+  corrupted: '#c86a8a',
 }

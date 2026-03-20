@@ -37,7 +37,7 @@ function Gate({ onEnter, language, setLanguage }) {
       <div className="gate-grid" />
       <div className="gate-vignette" />
 
-      <div className="lang-toggle">
+      <div className="lang-toggle gate-lang-toggle">
         <button
           type="button"
           className={language === 'en' ? 'ghost-btn active' : 'ghost-btn'}
