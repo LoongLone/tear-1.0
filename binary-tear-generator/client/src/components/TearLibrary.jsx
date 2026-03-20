@@ -65,6 +65,12 @@ function TearLibrary({
   }
 
   const handleLike = async (id) => {
+    setTears((current) =>
+      current.map((tear) =>
+        tear._id === id ? { ...tear, likes: (tear.likes || 0) + 1 } : tear
+      )
+    )
+
     try {
       const response = await fetch(`${API_URL}/api/tears/${id}/like`, {
         method: 'POST',
@@ -74,28 +80,32 @@ function TearLibrary({
         throw new Error(`like failed with status ${response.status}`)
       }
 
-      fetchTears()
+      void fetchTears()
     } catch (error) {
       console.error('点赞失败:', error)
+      setTears((current) =>
+        current.map((tear) =>
+          tear._id === id ? { ...tear, likes: Math.max((tear.likes || 1) - 1, 0) } : tear
+        )
+      )
       setRemoteError('点赞未成功提交，远端接口暂时不可用。')
     }
   }
 
-  const dedupedRemoteTears = tears.filter(
-    (tear) => !localTears.some((item) => item.tearId === tear.tearId)
-  )
-  const combinedTears = [
-    ...localTears.map((tear) => ({
+  const remoteTearIds = new Set(tears.map((tear) => tear.tearId))
+  const remoteTears = tears.map((tear) => ({
+    ...tear,
+    source: 'remote',
+  }))
+  const localOnlyTears = localTears
+    .filter((tear) => !remoteTearIds.has(tear.tearId))
+    .map((tear) => ({
       ...tear,
       _id: `local-${tear.tearId}`,
       source: 'local',
       likes: tear.likes || 0,
-    })),
-    ...dedupedRemoteTears.map((tear) => ({
-      ...tear,
-      source: 'remote',
-    })),
-  ]
+    }))
+  const combinedTears = [...remoteTears, ...localOnlyTears]
 
   return (
     <div className="tear-library">
@@ -176,8 +186,10 @@ function TearLibrary({
                     type="button"
                     className="like-btn"
                     onClick={() => handleLike(tear._id)}
+                    aria-label={`like ${tear.tearId}`}
                   >
-                    Lift · {tear.likes}
+                    <span className="like-btn-drop" aria-hidden="true" />
+                    <span className="like-btn-count">{tear.likes}</span>
                   </button>
                 ) : (
                   <span className="source-tag">本机档案</span>

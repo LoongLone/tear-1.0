@@ -9,7 +9,15 @@ app.use(cors())
 app.use(express.json())
 
 const uri = process.env.MONGODB_URI
-const client = uri ? new MongoClient(uri) : null
+const client = uri
+  ? new MongoClient(uri, {
+      maxPoolSize: 10,
+      minPoolSize: 0,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
+      socketTimeoutMS: 15000,
+    })
+  : null
 
 let db
 let tearsCollection
@@ -80,6 +88,10 @@ app.post('/api/tears', async (req, res) => {
   try {
     const { text, binary, tearId, emotion, name } = req.body
 
+    if (!text || !binary || !tearId || !emotion) {
+      return res.status(400).json({ error: '缺少必要字段' })
+    }
+
     const tearData = {
       text,
       binary,
@@ -134,6 +146,10 @@ app.get('/api/tears/hot', async (req, res) => {
 app.post('/api/tears/:id/like', async (req, res) => {
   try {
     const { id } = req.params
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: '无效的泪水 ID' })
+    }
+
     const result = await tearsCollection.updateOne(
       { _id: new ObjectId(id) },
       { $inc: { likes: 1 } }
