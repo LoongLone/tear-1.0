@@ -5,6 +5,36 @@ import {
   renderTransitFrame,
 } from '../utils/tearTransit'
 
+const COPY = {
+  en: {
+    kicker: 'Ingress Sequence',
+    title:
+      'The eye has captured this tear. The numbered sample is descending into the public archive.',
+    body:
+      'This layer is the final stare before entry into the secondary field. When the animation ends, you will enter the public sea. You can also save this transit as a GIF.',
+    latest: 'Latest Tear',
+    export: 'Export',
+    ready: 'Ready to export GIF',
+    saving: 'Encoding GIF',
+    save: 'Save this tear as GIF',
+    enter: 'Enter the public sea',
+    badge: 'Layer Shift / Forge to Archive',
+  },
+  zh: {
+    kicker: '入海序列',
+    title: '这滴泪已经被眼睛捕获，编号样本正缓慢坠入公共档案。',
+    body:
+      '这是进入第二视层之前的最后一次凝视。动画结束后，你会进入公共泪海；你也可以把这段过渡保存下来。',
+    latest: '最新样本',
+    export: '导出状态',
+    ready: '可导出 GIF',
+    saving: '正在编码 GIF',
+    save: '保存这滴泪的 GIF',
+    enter: '进入公共泪海',
+    badge: '层切换 / Forge to Archive',
+  },
+}
+
 function TearArchiveTransition({
   tearData,
   emotionColor,
@@ -12,7 +42,9 @@ function TearArchiveTransition({
   onSaveGif,
   gifStatus,
   isSavingGif,
+  language = 'en',
 }) {
+  const copy = COPY[language] || COPY.en
   const canvasRef = useRef(null)
   const completedRef = useRef(false)
 
@@ -81,23 +113,20 @@ function TearArchiveTransition({
 
   return (
     <main className="transition-shell">
-      <section className="transition-panel">
+      <section className="transition-panel panel-sheen">
         <div className="transition-copy">
-          <p className="section-kicker">Ingress sequence</p>
-          <h2>The watcher has captured the tear. The sample is being lowered into the public sea.</h2>
-          <p>
-            This layer sits between extraction and archive entry. When the descent ends,
-            the interface opens the shared sea and you can keep the transit as a GIF.
-          </p>
+          <p className="section-kicker">{copy.kicker}</p>
+          <h2>{copy.title}</h2>
+          <p>{copy.body}</p>
 
           <div className="transition-meta">
             <div className="status-card">
-              <span>Latest Tear</span>
+              <span>{copy.latest}</span>
               <strong className="tear-id">{tearData.tearId}</strong>
             </div>
             <div className="status-card">
-              <span>Export</span>
-              <strong>{gifStatus || 'Ready to encode GIF'}</strong>
+              <span>{copy.export}</span>
+              <strong>{gifStatus || copy.ready}</strong>
             </div>
           </div>
 
@@ -108,10 +137,10 @@ function TearArchiveTransition({
               onClick={onSaveGif}
               disabled={isSavingGif}
             >
-              {isSavingGif ? 'Encoding GIF' : 'Save this tear as GIF'}
+              {isSavingGif ? copy.saving : copy.save}
             </button>
             <button type="button" className="ghost-btn" onClick={onComplete}>
-              Enter the public sea
+              {copy.enter}
             </button>
           </div>
         </div>
@@ -123,7 +152,7 @@ function TearArchiveTransition({
             aria-label="tear archive transition"
           />
           <div className="transition-overlay">
-            <span className="transition-badge">Layer Shift / Forge to Archive</span>
+            <span className="transition-badge">{copy.badge}</span>
           </div>
         </div>
       </section>

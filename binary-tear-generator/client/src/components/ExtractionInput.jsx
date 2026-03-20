@@ -1,10 +1,31 @@
+const COPY = {
+  en: {
+    signalMirror: 'Signal mirror',
+    standby: 'standby',
+    remaining: 'the remaining 30% will be lost to the system',
+    retention: 'Retention 70%',
+    shortcut: 'Cmd/Ctrl + Enter to extract',
+    button: 'EXTRACT',
+  },
+  zh: {
+    signalMirror: '信号镜面',
+    standby: '静默待机',
+    remaining: '剩下的 30% 会被系统吞没',
+    retention: '保留率 70%',
+    shortcut: 'Cmd/Ctrl + Enter 抽取',
+    button: '开始抽取',
+  },
+}
+
 function ExtractionInput({
   value,
   onChange,
   onSubmit,
   placeholder = '...',
   disabled = false,
+  language = 'en',
 }) {
+  const copy = COPY[language] || COPY.en
   const normalized = value.replace(/\s+/g, ' ').trim()
   const keepCount = normalized ? Math.max(1, Math.floor(normalized.length * 0.7)) : 0
   const retained = normalized.slice(0, keepCount)
@@ -26,10 +47,10 @@ function ExtractionInput({
 
   return (
     <div className="extract-panel">
-      <div className="extract-overlay">
+      <div className="extract-overlay cool-panel">
         <div className="extract-head">
-          <span>Signal mirror</span>
-          <span>{normalized ? `${normalized.length} chars` : 'standby'}</span>
+          <span>{copy.signalMirror}</span>
+          <span>{normalized ? `${normalized.length} chars` : copy.standby}</span>
         </div>
 
         <div className="extract-preview-shell">
@@ -37,13 +58,13 @@ function ExtractionInput({
             {retained || placeholder}
           </p>
           <p className={`extract-loss ${discarded ? 'visible' : ''}`}>
-            {discarded || 'the remaining 30% will be lost to the system'}
+            {discarded || copy.remaining}
           </p>
         </div>
 
         <div className="extract-footer">
-          <span>Retention 70%</span>
-          <span>Cmd/Ctrl + Enter to extract</span>
+          <span>{copy.retention}</span>
+          <span>{copy.shortcut}</span>
         </div>
       </div>
 
@@ -64,7 +85,7 @@ function ExtractionInput({
         onClick={() => onSubmit(value)}
         disabled={disabled}
       >
-        EXTRACT
+        {copy.button}
       </button>
     </div>
   )
