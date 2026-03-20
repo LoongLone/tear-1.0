@@ -5,9 +5,17 @@ function ExtractionInput({
   placeholder = '...',
   disabled = false,
 }) {
-  const trimmedLength = value.trim().length
-  const preview =
-    value.length > 180 ? `${value.slice(0, 180).trimEnd()}...` : value || placeholder
+  const normalized = value.replace(/\s+/g, ' ').trim()
+  const keepCount = normalized ? Math.max(1, Math.floor(normalized.length * 0.7)) : 0
+  const retained = normalized.slice(0, keepCount)
+  const discarded = normalized
+    .slice(keepCount)
+    .split('')
+    .map((char, index) => {
+      if (char === ' ') return ' '
+      return index % 3 === 0 ? '░' : index % 2 === 0 ? '0' : '1'
+    })
+    .join('')
 
   const handleKeyDown = (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !disabled) {
@@ -17,21 +25,25 @@ function ExtractionInput({
   }
 
   return (
-    <div className="extract">
-      <div className="extract-frame">
-        <div className="extract-frame-header">
-          <span>Signal Mirror</span>
-          <span>{trimmedLength > 0 ? `${trimmedLength} chars` : 'standby'}</span>
+    <div className="extract-panel">
+      <div className="extract-overlay">
+        <div className="extract-head">
+          <span>Signal mirror</span>
+          <span>{normalized ? `${normalized.length} chars` : 'standby'}</span>
         </div>
 
-        <p className={`extract-preview ${value ? 'filled' : 'placeholder'}`}>
-          {preview}
-        </p>
+        <div className="extract-preview-shell">
+          <p className={`extract-preview ${retained ? 'filled' : 'placeholder'}`}>
+            {retained || placeholder}
+          </p>
+          <p className={`extract-loss ${discarded ? 'visible' : ''}`}>
+            {discarded || 'the remaining 30% will be lost to the system'}
+          </p>
+        </div>
 
-        <div className="extract-frame-footer">
-          {trimmedLength > 0
-            ? 'Cmd/Ctrl + Enter 也可以直接提取'
-            : '输入一段情绪，或使用下方语音按钮'}
+        <div className="extract-footer">
+          <span>Retention 70%</span>
+          <span>Cmd/Ctrl + Enter to extract</span>
         </div>
       </div>
 
@@ -41,7 +53,7 @@ function ExtractionInput({
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        rows="5"
+        rows="6"
         aria-label="emotion extraction input"
         spellCheck={false}
       />

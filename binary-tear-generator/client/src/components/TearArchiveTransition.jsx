@@ -81,13 +81,13 @@ function TearArchiveTransition({
 
   return (
     <main className="transition-shell">
-      <section className="transition-panel panel-sheen">
+      <section className="transition-panel">
         <div className="transition-copy">
-          <p className="section-kicker">Ingress Sequence</p>
-          <h2>眼睛已经捕获这滴泪水，编号样本正在坠入公共泪库。</h2>
+          <p className="section-kicker">Ingress sequence</p>
+          <h2>The watcher has captured the tear. The sample is being lowered into the public sea.</h2>
           <p>
-            这一层是进入二级视框之前的注视和投递。动画结束后会自动进入公共泪库，
-            同时你可以把这一段保存成 GIF。
+            This layer sits between extraction and archive entry. When the descent ends,
+            the interface opens the shared sea and you can keep the transit as a GIF.
           </p>
 
           <div className="transition-meta">
@@ -97,7 +97,7 @@ function TearArchiveTransition({
             </div>
             <div className="status-card">
               <span>Export</span>
-              <strong>{gifStatus || '准备导出 GIF'}</strong>
+              <strong>{gifStatus || 'Ready to encode GIF'}</strong>
             </div>
           </div>
 
@@ -108,10 +108,10 @@ function TearArchiveTransition({
               onClick={onSaveGif}
               disabled={isSavingGif}
             >
-              {isSavingGif ? '正在编码 GIF' : '保存这颗泪水 GIF'}
+              {isSavingGif ? 'Encoding GIF' : 'Save this tear as GIF'}
             </button>
             <button type="button" className="ghost-btn" onClick={onComplete}>
-              直接进入公共泪库
+              Enter the public sea
             </button>
           </div>
         </div>

@@ -1,24 +1,25 @@
 import { useState } from 'react'
 
 const hoverCopy = {
-  yes: 'Consent accepted. Layer 01 is opening.',
-  leave: 'Exit vector armed. You can still turn back.',
+  yes: 'Consent accepted. The archive is opening.',
+  leave: 'Exit remains possible. Recovery does not.',
 }
 
 function Gate({ onEnter }) {
   const [hover, setHover] = useState(null)
 
   return (
-    <div className="gate-shell">
+    <div className={`gate-shell ${hover ? `gate-hover-${hover}` : ''}`}>
       <div className="gate-atmosphere" />
       <div className="gate-grid" />
+      <div className="gate-vignette" />
 
       <div className="gate-content">
-        <p className="gate-kicker">Entry Protocol / Emotional Extraction</p>
+        <p className="gate-kicker">TEARS:// entry protocol</p>
         <h1 className="gate-title">This system extracts emotion.</h1>
-        <p className="gate-line gate-line-dim">
-          Are you willing to lose a part of yourself?
-        </p>
+        <p className="gate-line">Once processed, it cannot be retrieved.</p>
+        <p className="gate-line gate-line-dim">You will lose something.</p>
+        <p className="gate-line gate-line-dim">Proceed?</p>
 
         <div className="gate-actions">
           <button
@@ -36,9 +37,7 @@ function Gate({ onEnter }) {
             className={`gate-button gate-button-leave ${hover === 'leave' ? 'active' : ''}`}
             onMouseEnter={() => setHover('leave')}
             onMouseLeave={() => setHover(null)}
-            onClick={() => {
-              window.location.href = 'https://google.com'
-            }}
+            onClick={() => window.history.back()}
           >
             LEAVE
           </button>

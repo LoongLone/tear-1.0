@@ -1,13 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-function TearLibrary({
-  featuredTear,
-  localTears = [],
-  onBack,
-  refreshKey = 0,
-}) {
+function TearLibrary({ featuredTear, localTears = [], refreshKey = 0 }) {
   const [tears, setTears] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('latest')
@@ -21,10 +16,8 @@ function TearLibrary({
   useEffect(() => {
     const fetchTears = async () => {
       setLoading(true)
-
       try {
         const response = await fetch(endpoint)
-
         if (!response.ok) {
           throw new Error(`fetch failed with status ${response.status}`)
         }
@@ -34,7 +27,7 @@ function TearLibrary({
         setRemoteError('')
       } catch (error) {
         console.error('获取泪库失败:', error)
-        setRemoteError('公共泪库暂不可达，当前展示本机已生成的泪水。')
+        setRemoteError('Remote sea unreachable. Showing local and synthetic residue.')
       } finally {
         setLoading(false)
       }
@@ -43,26 +36,34 @@ function TearLibrary({
     fetchTears()
   }, [endpoint, refreshKey])
 
-  const fetchTears = async () => {
-    setLoading(true)
+  const allTears = useMemo(() => {
+    const merged = [...tears, ...localTears]
+    const map = new Map()
 
-    try {
-      const response = await fetch(endpoint)
-
-      if (!response.ok) {
-        throw new Error(`fetch failed with status ${response.status}`)
+    merged.forEach((tear) => {
+      if (!tear?.tearId) return
+      if (!map.has(tear.tearId)) {
+        map.set(tear.tearId, {
+          ...tear,
+          source: tear.source || (tear._id ? 'remote' : 'local'),
+          likes: tear.likes || 0,
+        })
       }
+    })
 
-      const data = await response.json()
-      setTears(Array.isArray(data) ? data : [])
-      setRemoteError('')
-    } catch (error) {
-      console.error('获取泪库失败:', error)
-      setRemoteError('公共泪库暂不可达，当前展示本机已生成的泪水。')
-    } finally {
-      setLoading(false)
+    const combined = Array.from(map.values())
+      .sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0))
+      .slice(0, 32)
+
+    if (featuredTear && !combined.some((item) => item.tearId === featuredTear.tearId)) {
+      combined.unshift(featuredTear)
     }
-  }
+
+    return combined
+  }, [featuredTear, localTears, tears])
+
+  const featured = featuredTear || allTears[0]
+  const field = allTears.filter((tear) => tear.tearId !== featured?.tearId)
 
   const handleLike = async (id) => {
     setTears((current) =>
@@ -72,196 +73,98 @@ function TearLibrary({
     )
 
     try {
-      const response = await fetch(`${API_URL}/api/tears/${id}/like`, {
-        method: 'POST',
-      })
-
+      const response = await fetch(`${API_URL}/api/tears/${id}/like`, { method: 'POST' })
       if (!response.ok) {
         throw new Error(`like failed with status ${response.status}`)
       }
-
-      void fetchTears()
     } catch (error) {
       console.error('点赞失败:', error)
-      setTears((current) =>
-        current.map((tear) =>
-          tear._id === id ? { ...tear, likes: Math.max((tear.likes || 1) - 1, 0) } : tear
-        )
-      )
-      setRemoteError('点赞未成功提交，远端接口暂时不可用。')
+      setRemoteError('Resonance could not be submitted to the remote sea.')
     }
   }
 
-  const featuredRemoteTear = featuredTear
-    ? tears.find((tear) => tear.tearId === featuredTear.tearId)
-    : null
-  const featuredEntry = featuredTear
-    ? {
-        ...(featuredRemoteTear || {}),
-        ...featuredTear,
-        _id:
-          featuredRemoteTear?._id ||
-          featuredTear._id ||
-          `featured-${featuredTear.tearId}`,
-        source:
-          featuredRemoteTear || featuredTear._id ? 'remote' : 'local',
-        likes:
-          featuredRemoteTear?.likes ??
-          featuredTear.likes ??
-          0,
-        timestamp: featuredRemoteTear?.timestamp || featuredTear.timestamp,
-        emotion: featuredRemoteTear?.emotion || featuredTear.emotion,
-      }
-    : null
-
-  const featuredTearId = featuredEntry?.tearId || ''
-  const remoteTearIds = new Set(tears.map((tear) => tear.tearId))
-  const remoteTears = tears
-    .filter((tear) => tear.tearId !== featuredTearId)
-    .map((tear) => ({
-      ...tear,
-      source: 'remote',
-    }))
-  const localOnlyTears = localTears
-    .filter((tear) => tear.tearId !== featuredTearId && !remoteTearIds.has(tear.tearId))
-    .map((tear) => ({
-      ...tear,
-      _id: tear._id || `local-${tear.tearId}`,
-      source: tear._id ? 'remote' : 'local',
-      likes: tear.likes || 0,
-    }))
-  const combinedTears = [...remoteTears, ...localOnlyTears]
-
   return (
-    <div className="tear-library">
-      <div className="library-hero">
+    <section className="tear-library immersive-library">
+      <div className="library-topline">
         <div>
-          <p className="section-kicker">Archive Confluence</p>
-          <h3>二级视框已经展开，所有泪水在这里聚合。</h3>
-          <p className="library-copy">
-            这里同时显示你刚生成的样本、本机缓存档案，以及接入成功时的公共泪库。
-          </p>
+          <p className="section-kicker">Shared body / moving archive</p>
+          <h3>The sea is populated by what survived extraction.</h3>
         </div>
 
-        <div className="library-toolbar">
-          {onBack ? (
-            <button type="button" className="ghost-btn" onClick={onBack}>
-              返回
-            </button>
-          ) : null}
-
-          <div className="filter-buttons">
-            <button
-              type="button"
-              className={filter === 'latest' ? 'active' : ''}
-              onClick={() => setFilter('latest')}
-            >
-              最新
-            </button>
-            <button
-              type="button"
-              className={filter === 'hot' ? 'active' : ''}
-              onClick={() => setFilter('hot')}
-            >
-              热门
-            </button>
-          </div>
+        <div className="library-controls">
+          <button
+            type="button"
+            className={filter === 'latest' ? 'ghost-btn active' : 'ghost-btn'}
+            onClick={() => setFilter('latest')}
+          >
+            Latest
+          </button>
+          <button
+            type="button"
+            className={filter === 'hot' ? 'ghost-btn active' : 'ghost-btn'}
+            onClick={() => setFilter('hot')}
+          >
+            Resonant
+          </button>
         </div>
       </div>
 
-      {featuredEntry ? (
-        <div
-          className={`featured-banner panel-inset ${
-            featuredEntry.source === 'remote' ? 'featured-banner-live' : ''
-          }`}
-        >
-          <div className="featured-banner-header">
-            <div>
-              <span>刚进入视框的泪水</span>
-              <strong className="tear-id">{featuredEntry.tearId}</strong>
-            </div>
-            <div className="featured-banner-tags">
-              <span className="tear-emotion">{featuredEntry.emotion}</span>
-              <span className="source-tag">
-                {featuredEntry.source === 'remote' ? '公共泪库' : '等待同步'}
-              </span>
+      {remoteError ? <div className="library-status">{remoteError}</div> : null}
+      {loading && allTears.length === 0 ? <div className="library-status">Scanning the sea...</div> : null}
+
+      {featured ? (
+        <article className={`featured-anomaly ${featured.corrupted ? 'is-corrupted' : ''}`}>
+          <div className="featured-anomaly-copy">
+            <span className="featured-label">This tear should not exist.</span>
+            <strong className="tear-id">{featured.tearId}</strong>
+            <p className="featured-text">{featured.text}</p>
+            <div className="featured-meta">
+              <span>{featured.emotion}</span>
+              <span>density {featured.density || featured.intensity || 0}</span>
+              <span>{featured.systemGenerated ? 'Unknown Source' : 'Recovered fragment'}</span>
             </div>
           </div>
-
-          <p>{featuredEntry.text}</p>
-
-          <div className="featured-banner-footer">
-            <small>
-              {featuredEntry.source === 'remote'
-                ? '这滴泪水已经完成坠入，现在就在公共泪库入口位。'
-                : '这滴泪水已进入入口位，正在等待远端同步。'}
-            </small>
-
-            {featuredEntry.source === 'remote' ? (
-              <button
-                type="button"
-                className="like-btn"
-                onClick={() => handleLike(featuredEntry._id)}
-                aria-label={`like ${featuredEntry.tearId}`}
-              >
-                <span className="like-btn-drop" aria-hidden="true" />
-                <span className="like-btn-count">{featuredEntry.likes}</span>
-              </button>
-            ) : null}
+          <div className="featured-loss-panel">
+            <span>lost to extraction</span>
+            <p>{featured.lostText || '░01░0░11░0░1'}</p>
           </div>
-        </div>
+        </article>
       ) : null}
 
-      {remoteError ? <div className="library-status">{remoteError}</div> : null}
-
-      {loading && combinedTears.length === 0 ? (
-        <div className="library-status">正在加载二级公域...</div>
-      ) : combinedTears.length > 0 ? (
-        <div className="tear-grid">
-          {combinedTears.map((tear) => (
+      <div className="tear-sea-field">
+        {field.length > 0 ? (
+          field.map((tear, index) => (
             <article
-              key={tear._id}
-              className={`tear-card ${tear.source === 'local' ? 'local-card' : ''}`}
+              key={tear._id || tear.tearId}
+              className={`sea-node ${tear.corrupted ? 'is-corrupted' : ''} ${tear.systemGenerated ? 'is-system' : ''}`}
+              style={{
+                '--x': `${(index * 17) % 82}%`,
+                '--y': `${(index * 29) % 72}%`,
+                '--delay': `${(index % 7) * 0.7}s`,
+              }}
             >
-              <div className="tear-card-header">
+              <div className="sea-node-core" />
+              <div className="sea-node-copy">
                 <span className="tear-id">{tear.tearId}</span>
-                <span className="tear-emotion">{tear.emotion}</span>
+                <p>{tear.text.length > 88 ? `${tear.text.slice(0, 88)}...` : tear.text}</p>
+                <div className="sea-node-meta">
+                  <span>{tear.emotion}</span>
+                  <span>{tear.source === 'remote' ? 'public sea' : tear.systemGenerated ? 'unknown source' : 'local residue'}</span>
+                </div>
               </div>
 
-              <div className="tear-card-content">
-                <p className="tear-text">
-                  “{tear.text.length > 64 ? `${tear.text.slice(0, 64)}...` : tear.text}”
-                </p>
-                <p className="tear-name">{tear.name}</p>
-              </div>
-
-              <div className="tear-card-footer">
-                <span className="tear-date">
-                  {tear.timestamp
-                    ? new Date(tear.timestamp).toLocaleDateString()
-                    : 'just now'}
-                </span>
-                {tear.source === 'remote' ? (
-                  <button
-                    type="button"
-                    className="like-btn"
-                    onClick={() => handleLike(tear._id)}
-                    aria-label={`like ${tear.tearId}`}
-                  >
-                    <span className="like-btn-drop" aria-hidden="true" />
-                    <span className="like-btn-count">{tear.likes}</span>
-                  </button>
-                ) : (
-                  <span className="source-tag">本机档案</span>
-                )}
-              </div>
+              {tear._id && !tear.systemGenerated ? (
+                <button type="button" className="resonance-btn" onClick={() => handleLike(tear._id)}>
+                  resonate {tear.likes || 0}
+                </button>
+              ) : null}
             </article>
-          ))}
-        </div>
-      ) : (
-        <div className="library-status">暂时还没有泪水进入这个视框。</div>
-      )}
-    </div>
+          ))
+        ) : (
+          <div className="library-status">No tears are visible yet.</div>
+        )}
+      </div>
+    </section>
   )
 }
 

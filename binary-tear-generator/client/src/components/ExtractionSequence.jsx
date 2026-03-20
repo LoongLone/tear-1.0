@@ -2,56 +2,58 @@ import TearDrop from './TearDrop'
 
 const stageMeta = {
   extracting: {
-    title: 'Extracting...',
-    copy: 'The chamber is stripping the text down to a readable emotional signal.',
+    title: 'Extracting unstable pattern...',
+    copy: 'The chamber is stripping language from the signal.',
   },
   glitch: {
-    title: 'Signal Instability',
-    copy: 'Language is distorting. Meaning is being cut away from form.',
+    title: 'Signal instability',
+    copy: 'Parsing emotional residue. Form is breaking before meaning can remain.',
   },
   compress: {
     title: 'Compression',
-    copy: 'The confession is collapsing into a single luminous point.',
+    copy: 'The confession is collapsing into a single hostile point.',
   },
   forming: {
-    title: 'Tear Generation',
-    copy: 'A vessel is condensing around the extracted emotional residue.',
+    title: 'Tear generation',
+    copy: 'A vessel is condensing around the residue that survived.',
   },
   dropping: {
     title: 'Descent',
-    copy: 'The newly formed tear is dropping toward the shared sea.',
+    copy: 'The newly formed tear is dropping toward the public body.',
   },
   sea: {
-    title: 'Sea Ingress',
-    copy: 'The tear has entered the public ocean and begins to merge with others.',
+    title: 'Sea ingress',
+    copy: 'The tear has entered the shared sea. It no longer belongs to you.',
   },
 }
 
-function ExtractionSequence({ stage, text, tearData, emotionColor }) {
-  const meta = stageMeta[stage] || stageMeta.extracting
+function ExtractionSequence({ stage, text, tearData, emotionColor, compact = false }) {
+  const meta = stageMeta[stage] || stageMeta.forming
   const bits = (tearData?.binary || '')
-    .slice(0, 20)
+    .slice(0, compact ? 16 : 24)
     .split('')
     .map((bit, index) => ({
       bit,
       id: `${bit}-${index}`,
-      x: Math.cos((index / 20) * Math.PI * 2) * (110 + (index % 3) * 18),
-      y: Math.sin((index / 20) * Math.PI * 2) * (82 + (index % 4) * 12),
-      delay: `${(index % 6) * 70}ms`,
+      x: Math.cos((index / 20) * Math.PI * 2) * (compact ? 70 : 110),
+      y: Math.sin((index / 20) * Math.PI * 2) * (compact ? 54 : 86),
+      delay: `${(index % 6) * 80}ms`,
     }))
 
-  const showTear = ['forming', 'dropping', 'sea'].includes(stage)
+  const showTear = compact || ['forming', 'dropping', 'sea'].includes(stage)
 
   return (
-    <main className={`extraction-sequence stage-${stage}`}>
-      <div className="sequence-flash" />
+    <main className={`extraction-sequence stage-${stage} ${compact ? 'compact' : ''}`}>
+      {!compact ? <div className="sequence-flash" /> : null}
       <div className="sequence-noise" />
 
-      <div className="sequence-copy">
-        <p className="section-kicker">Extraction Cinema / Layer 01</p>
-        <h2>{meta.title}</h2>
-        <p>{meta.copy}</p>
-      </div>
+      {!compact ? (
+        <div className="sequence-copy">
+          <p className="section-kicker">Extraction cinema / Layer 01</p>
+          <h2>{meta.title}</h2>
+          <p>{meta.copy}</p>
+        </div>
+      ) : null}
 
       <div className="sequence-chamber">
         <div className="sequence-text-shell">
@@ -87,11 +89,13 @@ function ExtractionSequence({ stage, text, tearData, emotionColor }) {
           ) : null}
 
           <div className="sequence-ripple" />
-          <div className="sequence-sea">
-            <span />
-            <span />
-            <span />
-          </div>
+          {!compact ? (
+            <div className="sequence-sea">
+              <span />
+              <span />
+              <span />
+            </div>
+          ) : null}
         </div>
       </div>
     </main>
