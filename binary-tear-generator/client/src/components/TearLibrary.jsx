@@ -92,17 +92,42 @@ function TearLibrary({
     }
   }
 
+  const featuredRemoteTear = featuredTear
+    ? tears.find((tear) => tear.tearId === featuredTear.tearId)
+    : null
+  const featuredEntry = featuredTear
+    ? {
+        ...(featuredRemoteTear || {}),
+        ...featuredTear,
+        _id:
+          featuredRemoteTear?._id ||
+          featuredTear._id ||
+          `featured-${featuredTear.tearId}`,
+        source:
+          featuredRemoteTear || featuredTear._id ? 'remote' : 'local',
+        likes:
+          featuredRemoteTear?.likes ??
+          featuredTear.likes ??
+          0,
+        timestamp: featuredRemoteTear?.timestamp || featuredTear.timestamp,
+        emotion: featuredRemoteTear?.emotion || featuredTear.emotion,
+      }
+    : null
+
+  const featuredTearId = featuredEntry?.tearId || ''
   const remoteTearIds = new Set(tears.map((tear) => tear.tearId))
-  const remoteTears = tears.map((tear) => ({
-    ...tear,
-    source: 'remote',
-  }))
-  const localOnlyTears = localTears
-    .filter((tear) => !remoteTearIds.has(tear.tearId))
+  const remoteTears = tears
+    .filter((tear) => tear.tearId !== featuredTearId)
     .map((tear) => ({
       ...tear,
-      _id: `local-${tear.tearId}`,
-      source: 'local',
+      source: 'remote',
+    }))
+  const localOnlyTears = localTears
+    .filter((tear) => tear.tearId !== featuredTearId && !remoteTearIds.has(tear.tearId))
+    .map((tear) => ({
+      ...tear,
+      _id: tear._id || `local-${tear.tearId}`,
+      source: tear._id ? 'remote' : 'local',
       likes: tear.likes || 0,
     }))
   const combinedTears = [...remoteTears, ...localOnlyTears]
@@ -144,11 +169,46 @@ function TearLibrary({
         </div>
       </div>
 
-      {featuredTear ? (
-        <div className="featured-banner panel-inset">
-          <span>刚生成的样本</span>
-          <strong className="tear-id">{featuredTear.tearId}</strong>
-          <p>{featuredTear.text}</p>
+      {featuredEntry ? (
+        <div
+          className={`featured-banner panel-inset ${
+            featuredEntry.source === 'remote' ? 'featured-banner-live' : ''
+          }`}
+        >
+          <div className="featured-banner-header">
+            <div>
+              <span>刚进入视框的泪水</span>
+              <strong className="tear-id">{featuredEntry.tearId}</strong>
+            </div>
+            <div className="featured-banner-tags">
+              <span className="tear-emotion">{featuredEntry.emotion}</span>
+              <span className="source-tag">
+                {featuredEntry.source === 'remote' ? '公共泪库' : '等待同步'}
+              </span>
+            </div>
+          </div>
+
+          <p>{featuredEntry.text}</p>
+
+          <div className="featured-banner-footer">
+            <small>
+              {featuredEntry.source === 'remote'
+                ? '这滴泪水已经完成坠入，现在就在公共泪库入口位。'
+                : '这滴泪水已进入入口位，正在等待远端同步。'}
+            </small>
+
+            {featuredEntry.source === 'remote' ? (
+              <button
+                type="button"
+                className="like-btn"
+                onClick={() => handleLike(featuredEntry._id)}
+                aria-label={`like ${featuredEntry.tearId}`}
+              >
+                <span className="like-btn-drop" aria-hidden="true" />
+                <span className="like-btn-count">{featuredEntry.likes}</span>
+              </button>
+            ) : null}
+          </div>
         </div>
       ) : null}
 

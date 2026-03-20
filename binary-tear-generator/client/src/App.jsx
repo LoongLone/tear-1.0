@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import Gate from './components/Gate'
+import ExtractionInput from './components/ExtractionInput'
+import ExtractionSequence from './components/ExtractionSequence'
 import TearArchiveTransition from './components/TearArchiveTransition'
 import TearDrop from './components/TearDrop'
 import TearLibrary from './components/TearLibrary'
@@ -13,6 +16,11 @@ import './App.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 const LOCAL_TEAR_STORAGE_KEY = 'novon.local.tears'
+const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
+
+function createTearIdFallback(text) {
+  return generateTearId(text)
+}
 
 function loadLocalTears() {
   if (typeof window === 'undefined') {
@@ -29,8 +37,9 @@ function loadLocalTears() {
   }
 }
 
-function App() {
+function MainApp() {
   const [mode, setMode] = useState('forge')
+  const [stage, setStage] = useState('idle')
   const [inputText, setInputText] = useState('')
   const [tearData, setTearData] = useState(null)
   const [tearId, setTearId] = useState('')
@@ -59,6 +68,7 @@ function App() {
   const activeBinary = tearData ? tearData.binary : previewBinary
   const activeEmotion = tearData ? emotion : previewEmotion
   const activeColor = emotionColors[activeEmotion]
+  const isExtracting = mode === 'sequence'
 
   const saveTearToCloud = async (nextTear) => {
     try {
@@ -74,6 +84,20 @@ function App() {
         throw new Error(`save failed with status ${response.status}`)
       }
 
+      const payload = await response.json()
+      const remoteId = payload?.id ? String(payload.id) : ''
+
+      if (remoteId) {
+        setTearData((current) =>
+          current?.tearId === nextTear.tearId ? { ...current, _id: remoteId } : current
+        )
+        setLocalTears((current) =>
+          current.map((tear) =>
+            tear.tearId === nextTear.tearId ? { ...tear, _id: remoteId } : tear
+          )
+        )
+      }
+
       setSaveMessage('已同步到公共泪库')
       setLibraryRefreshKey((current) => current + 1)
     } catch (error) {
@@ -82,38 +106,77 @@ function App() {
     }
   }
 
-  const handleGenerate = () => {
-    if (!inputText.trim()) {
+  const generateTear = (rawText) => {
+    const normalizedText = rawText.trim()
+    const binary = textToBinary(normalizedText)
+    const type = analyzeEmotion(normalizedText)
+    const createdAt = Date.now()
+    const tearId = generateTearId(normalizedText)
+    const id =
+      globalThis.crypto?.randomUUID?.() || createTearIdFallback(normalizedText)
+    const intensity = Math.random()
+
+    return {
+      id,
+      content: normalizedText,
+      intensity,
+      type,
+      createdAt,
+      text: normalizedText,
+      binary,
+      tearId,
+      emotion: type,
+      name: `Shard ${tearId.slice(-4)}`,
+      timestamp: new Date(createdAt).toISOString(),
+    }
+  }
+
+  const handleExtract = async (rawText) => {
+    const normalizedText = rawText.trim()
+
+    if (!normalizedText || isExtracting) {
       return
     }
 
-    const binary = textToBinary(inputText)
-    const id = generateTearId(inputText)
-    const detectedEmotion = analyzeEmotion(inputText)
-    const nextTear = {
-      text: inputText,
-      binary,
-      tearId: id,
-      emotion: detectedEmotion,
-      name: `Shard ${id.slice(-4)}`,
-      timestamp: new Date().toISOString(),
-    }
+    setMode('sequence')
+    setStage('extracting')
+
+    await wait(300)
+    setStage('glitch')
+
+    await wait(500)
+
+    const nextTear = generateTear(normalizedText)
 
     setTearData(nextTear)
-    setTearId(id)
-    setEmotion(detectedEmotion)
+    setTearId(nextTear.tearId)
+    setEmotion(nextTear.emotion)
     setSaveMessage('正在写入二级公域...')
     setGifStatus('')
     setLocalTears((current) => [
       nextTear,
       ...current.filter((item) => item.tearId !== nextTear.tearId),
     ])
-    setMode('transit')
-
     void saveTearToCloud(nextTear)
+
+    setStage('compress')
+    await wait(520)
+
+    setStage('forming')
+    await wait(700)
+
+    setStage('dropping')
+    await wait(900)
+
+    setStage('sea')
+    await wait(820)
+
+    setStage('idle')
+    setMode('transit')
   }
 
   const handleTransitionComplete = () => {
+    setLibraryRefreshKey((current) => current + 1)
     setMode('archive')
   }
 
@@ -235,23 +298,16 @@ function App() {
               <div className="emotion-chip">{activeEmotion}</div>
             </div>
 
-            <textarea
+            <ExtractionInput
               value={inputText}
-              onChange={(event) => setInputText(event.target.value)}
+              onChange={setInputText}
+              onSubmit={handleExtract}
               placeholder="把一段情绪、一个碎片、一个你不想明说的句子输入这里。"
-              rows="5"
+              disabled={!inputText.trim() || isExtracting}
             />
 
-            <div className="action-row">
+            <div className="action-row action-row-voice">
               <VoiceInput onTranscript={handleVoiceTranscript} />
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={!inputText.trim()}
-                className="generate-btn"
-              >
-                生成并进入泪库
-              </button>
             </div>
 
             <div className="status-grid">
@@ -266,6 +322,13 @@ function App() {
             </div>
           </section>
         </main>
+      ) : mode === 'sequence' ? (
+        <ExtractionSequence
+          stage={stage}
+          text={inputText}
+          tearData={tearData}
+          emotionColor={activeColor}
+        />
       ) : mode === 'transit' ? (
         <TearArchiveTransition
           tearData={tearData}
@@ -333,6 +396,17 @@ function App() {
         </main>
       )}
     </div>
+  )
+}
+
+function App() {
+  const [entered, setEntered] = useState(false)
+
+  return (
+    <>
+      {!entered && <Gate onEnter={() => setEntered(true)} />}
+      {entered && <MainApp />}
+    </>
   )
 }
 
