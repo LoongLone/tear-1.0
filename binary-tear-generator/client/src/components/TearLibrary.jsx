@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import LiquidTearNode from './LiquidTearNode'
+import MobileBottomSheet from './MobileBottomSheet'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -8,8 +10,7 @@ const COPY = {
     title: 'What survives extraction continues to drift here.',
     latest: 'Latest',
     resonant: 'Resonant',
-    remoteFail:
-      'Remote sea unreachable. Local and synthetic residues are now visible.',
+    remoteFail: 'Remote sea unreachable. Local and synthetic residues are now visible.',
     scanning: 'Scanning the public sea...',
     anomaly: 'This tear should not exist.',
     density: 'density',
@@ -21,6 +22,10 @@ const COPY = {
     noTears: 'No visible tears yet.',
     resonate: 'resonate',
     systemClass: 'system class',
+    familiar: 'familiar trace',
+    contamination: 'contamination',
+    holdHint: 'hold to resonate',
+    more: 'open archive card',
   },
   zh: {
     kicker: '共享身体 / 不稳定水域',
@@ -39,6 +44,10 @@ const COPY = {
     noTears: '此刻还没有可见泪滴。',
     resonate: '共振',
     systemClass: '系统类别',
+    familiar: '熟悉残留',
+    contamination: '污染值',
+    holdHint: '长按共振',
+    more: '展开档案卡',
   },
 }
 
@@ -46,12 +55,11 @@ function createNodeLayout(index, isMobile) {
   if (isMobile) {
     const col = index % 2
     const row = Math.floor(index / 2)
-
     return {
       x: col === 0 ? 32 : 68,
-      y: 12 + row * 11.5,
-      size: 78 + ((index * 11) % 44),
-      drift: 6 + (index % 4) * 3,
+      y: 12 + row * 12.6,
+      size: 84 + ((index * 13) % 42),
+      drift: 5 + (index % 4) * 3,
       delay: (index % 8) * 0.45,
       duration: 9 + (index % 6) * 1.8,
       blur: 12 + (index % 5) * 4,
@@ -60,9 +68,9 @@ function createNodeLayout(index, isMobile) {
     }
   }
 
-  const baseX = 12 + ((index * 13.7) % 76)
-  const baseY = 10 + ((index * 17.5) % 74)
-  const size = 84 + ((index * 17) % 86)
+  const baseX = 11 + ((index * 11.9) % 78)
+  const baseY = 10 + ((index * 16.8) % 74)
+  const size = 88 + ((index * 19) % 94)
   const drift = 8 + (index % 5) * 4
   const delay = (index % 9) * 0.6
   const duration = 10 + (index % 7) * 2.2
@@ -70,7 +78,7 @@ function createNodeLayout(index, isMobile) {
   const opacity = 0.18 + (index % 5) * 0.06
 
   return {
-    x: Math.min(baseX, 86),
+    x: Math.min(baseX, 88),
     y: Math.min(baseY, 84),
     size,
     drift,
@@ -82,9 +90,9 @@ function createNodeLayout(index, isMobile) {
   }
 }
 
-function buildLinks(nodes) {
+function buildLinks(nodes, activeNodeId = null) {
   const links = []
-  const maxDistance = 20
+  const maxDistance = 21
 
   for (let i = 0; i < nodes.length; i += 1) {
     for (let j = i + 1; j < nodes.length; j += 1) {
@@ -99,6 +107,10 @@ function buildLinks(nodes) {
         const midY = (a.layout.y + b.layout.y) / 2
         const angle = (Math.atan2(dy, dx) * 180) / Math.PI
         const corrupted = a.tear.corrupted || b.tear.corrupted
+        const familiar = a.tear.isFamiliar || b.tear.isFamiliar
+        const activated =
+          activeNodeId &&
+          (a.tear.tearId === activeNodeId || b.tear.tearId === activeNodeId)
 
         links.push({
           id: `${a.tear.tearId}-${b.tear.tearId}`,
@@ -106,16 +118,44 @@ function buildLinks(nodes) {
           y: midY,
           width: distance,
           angle,
-          opacity: Number(
-            (0.05 + (1 - distance / maxDistance) * 0.2).toFixed(3)
-          ),
+          opacity: Number((0.05 + (1 - distance / maxDistance) * 0.22).toFixed(3)),
           corrupted,
+          familiar,
+          activated,
         })
       }
     }
   }
 
-  return links.slice(0, 26)
+  return links.slice(0, 32)
+}
+
+function computeContamination(tear, activeNodeId, nodes) {
+  if (tear.corrupted) return 1
+  const current = nodes.find((node) => node.tear.tearId === tear.tearId)
+  if (!current) return 0
+
+  let contamination = 0
+  nodes.forEach((node) => {
+    if (node.tear.tearId === tear.tearId) return
+    if (!node.tear.corrupted) return
+    const dx = node.layout.x - current.layout.x
+    const dy = node.layout.y - current.layout.y
+    const distance = Math.sqrt(dx * dx + dy * dy)
+    if (distance < 16) contamination = Math.max(contamination, 1 - distance / 16)
+  })
+
+  if (activeNodeId) {
+    const active = nodes.find((node) => node.tear.tearId === activeNodeId)
+    if (active && active.tear.corrupted) {
+      const dx = active.layout.x - current.layout.x
+      const dy = active.layout.y - current.layout.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      if (distance < 24) contamination = Math.max(contamination, 0.35 + (1 - distance / 24) * 0.5)
+    }
+  }
+
+  return Number(Math.min(contamination, 1).toFixed(2))
 }
 
 function TearLibrary({
@@ -123,6 +163,9 @@ function TearLibrary({
   featuredTear,
   localTears = [],
   refreshKey = 0,
+  residualSignature = null,
+  isMobile = false,
+  residualMarks = [],
 }) {
   const copy = COPY[language]
   const [tears, setTears] = useState([])
@@ -130,9 +173,9 @@ function TearLibrary({
   const [filter, setFilter] = useState('latest')
   const [remoteError, setRemoteError] = useState('')
   const [activeNode, setActiveNode] = useState(null)
-  const [isCompactViewport, setIsCompactViewport] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth <= 640 : false
-  )
+  const [selectedTear, setSelectedTear] = useState(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const holdTimerRef = useRef(null)
 
   const endpoint =
     filter === 'latest'
@@ -144,15 +187,12 @@ function TearLibrary({
       setLoading(true)
       try {
         const response = await fetch(endpoint)
-        if (!response.ok) {
-          throw new Error(`fetch failed with status ${response.status}`)
-        }
-
+        if (!response.ok) throw new Error(`fetch failed with status ${response.status}`)
         const data = await response.json()
         setTears(Array.isArray(data) ? data : [])
         setRemoteError('')
       } catch (error) {
-        console.error('获取泪库失败:', error)
+        console.error('fetch tears failed:', error)
         setRemoteError(copy.remoteFail)
       } finally {
         setLoading(false)
@@ -161,18 +201,6 @@ function TearLibrary({
 
     fetchTears()
   }, [copy.remoteFail, endpoint, refreshKey])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
-
-    const syncViewport = () => {
-      setIsCompactViewport(window.innerWidth <= 640)
-    }
-
-    syncViewport()
-    window.addEventListener('resize', syncViewport)
-    return () => window.removeEventListener('resize', syncViewport)
-  }, [])
 
   const allTears = useMemo(() => {
     const merged = [...tears, ...localTears]
@@ -185,53 +213,51 @@ function TearLibrary({
           ...tear,
           source: tear.source || (tear._id ? 'remote' : 'local'),
           likes: tear.likes || 0,
+          isFamiliar: residualSignature?.lastTearId
+            ? tear.tearId === residualSignature.lastTearId ||
+              tear.emotion === residualSignature.dominantEmotion
+            : false,
         })
       }
     })
 
     const combined = Array.from(map.values())
       .sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0))
-      .slice(0, 34)
+      .slice(0, isMobile ? 18 : 40)
 
     if (featuredTear && !combined.some((item) => item.tearId === featuredTear.tearId)) {
       combined.unshift(featuredTear)
     }
 
     return combined
-  }, [featuredTear, localTears, tears])
+  }, [featuredTear, localTears, tears, residualSignature, isMobile])
 
   const featured = featuredTear || allTears[0]
   const field = allTears.filter((tear) => tear.tearId !== featured?.tearId)
+
   const renderedNodes = useMemo(
     () =>
       field.map((tear, index) => ({
         tear,
-        layout: createNodeLayout(index, isCompactViewport),
+        layout: createNodeLayout(index, isMobile),
       })),
-    [field, isCompactViewport]
+    [field, isMobile]
   )
-  const links = useMemo(() => buildLinks(renderedNodes), [renderedNodes])
 
-  useEffect(() => {
-    if (!activeNode) return
+  const enrichedNodes = useMemo(() => {
+    return renderedNodes.map((node) => ({
+      ...node,
+      contamination: computeContamination(node.tear, activeNode, renderedNodes),
+    }))
+  }, [renderedNodes, activeNode])
 
-    const stillVisible = renderedNodes.some(
-      ({ tear }) => tear.tearId === activeNode
-    )
-
-    if (!stillVisible) {
-      setActiveNode(null)
-    }
-  }, [activeNode, renderedNodes])
+  const links = useMemo(() => buildLinks(enrichedNodes, activeNode), [enrichedNodes, activeNode])
 
   const handleLike = async (tear) => {
     const targetId = tear._id || tear.tearId
 
     setTears((current) => {
-      const hasMatch = current.some(
-        (item) => (item._id || item.tearId) === targetId
-      )
-
+      const hasMatch = current.some((item) => (item._id || item.tearId) === targetId)
       if (!hasMatch) {
         return [
           {
@@ -250,25 +276,45 @@ function TearLibrary({
       )
     })
 
-    if (!tear._id) {
-      return
-    }
+    setSelectedTear((current) =>
+      current && current.tearId === tear.tearId
+        ? { ...current, likes: (current.likes || 0) + 1 }
+        : current
+    )
+
+    if (!tear._id) return
 
     try {
-      const response = await fetch(`${API_URL}/api/tears/${tear._id}/like`, {
-        method: 'POST',
-      })
-      if (!response.ok) {
-        throw new Error(`like failed with status ${response.status}`)
-      }
+      const response = await fetch(`${API_URL}/api/tears/${tear._id}/like`, { method: 'POST' })
+      if (!response.ok) throw new Error(`like failed with status ${response.status}`)
     } catch (error) {
       console.error('like failed:', error)
       setRemoteError(copy.remoteFail)
     }
   }
 
+  const openNode = (tear, contamination) => {
+    setActiveNode(tear.tearId)
+    setSelectedTear({ ...tear, contamination })
+    setSheetOpen(false)
+  }
+
+  const startHold = (tear, contamination) => {
+    if (!isMobile) return
+    holdTimerRef.current = window.setTimeout(() => {
+      handleLike({ ...tear, contamination })
+    }, 420)
+  }
+
+  const clearHold = () => {
+    if (holdTimerRef.current) {
+      window.clearTimeout(holdTimerRef.current)
+      holdTimerRef.current = null
+    }
+  }
+
   return (
-    <section className="tear-library immersive-library">
+    <section className={`tear-library immersive-library cult-archive ${isMobile ? 'mobile-archive-library' : ''}`}>
       <div className="library-topline">
         <div>
           <p className="section-kicker">{copy.kicker}</p>
@@ -276,32 +322,21 @@ function TearLibrary({
         </div>
 
         <div className="library-controls">
-          <button
-            type="button"
-            className={filter === 'latest' ? 'ghost-btn active' : 'ghost-btn'}
-            onClick={() => setFilter('latest')}
-          >
+          <button type="button" className={filter === 'latest' ? 'ghost-btn active' : 'ghost-btn'} onClick={() => setFilter('latest')}>
             {copy.latest}
           </button>
-          <button
-            type="button"
-            className={filter === 'hot' ? 'ghost-btn active' : 'ghost-btn'}
-            onClick={() => setFilter('hot')}
-          >
+          <button type="button" className={filter === 'hot' ? 'ghost-btn active' : 'ghost-btn'} onClick={() => setFilter('hot')}>
             {copy.resonant}
           </button>
         </div>
       </div>
 
+      {isMobile ? <div className="mobile-archive-hint">{copy.holdHint}</div> : null}
       {remoteError ? <div className="library-status">{remoteError}</div> : null}
-      {loading && allTears.length === 0 ? (
-        <div className="library-status">{copy.scanning}</div>
-      ) : null}
+      {loading && allTears.length === 0 ? <div className="library-status">{copy.scanning}</div> : null}
 
-      {featured ? (
-        <article
-          className={`featured-anomaly featured-anomaly-liquid ${featured.corrupted ? 'is-corrupted' : ''}`}
-        >
+      {!isMobile && featured ? (
+        <article className={`featured-anomaly featured-anomaly-liquid ${featured.corrupted ? 'is-corrupted' : ''}`}>
           <div className="featured-liquid-core" />
           <div className="featured-liquid-haze" />
           <div className="featured-anomaly-copy">
@@ -310,14 +345,8 @@ function TearLibrary({
             <p className="featured-text">{featured.text}</p>
             <div className="featured-meta">
               <span>{featured.emotion}</span>
-              <span>
-                {copy.density} {featured.density || featured.intensity || 0}
-              </span>
-              <span>
-                {featured.systemGenerated
-                  ? featured.name || copy.unknownSource
-                  : copy.recoveredFragment}
-              </span>
+              <span>{copy.density} {featured.density || featured.intensity || 0}</span>
+              <span>{featured.systemGenerated ? featured.name || copy.unknownSource : copy.recoveredFragment}</span>
             </div>
           </div>
           <div className="featured-loss-panel">
@@ -328,19 +357,28 @@ function TearLibrary({
       ) : null}
 
       <div
-        className="tear-sea-field liquid-sea-field"
-        onClick={() => setActiveNode(null)}
+        className="tear-sea-field liquid-sea-field high-cult-sea"
+        onClick={() => {
+          setActiveNode(null)
+          if (isMobile) {
+            setSelectedTear(null)
+            setSheetOpen(false)
+          }
+        }}
       >
         <div className="sea-depth-glow" />
         <div className="sea-fog-layer fog-a" />
         <div className="sea-fog-layer fog-b" />
         <div className="sea-fog-layer fog-c" />
+        <div className="sea-runic-grid" />
+        <div className="sea-orbit-trace orbit-a" />
+        <div className="sea-orbit-trace orbit-b" />
 
         <div className="sea-link-layer" aria-hidden="true">
           {links.map((link) => (
             <span
               key={link.id}
-              className={`sea-link ${link.corrupted ? 'is-corrupted' : ''}`}
+              className={`sea-link ${link.corrupted ? 'is-corrupted' : ''} ${link.familiar ? 'is-familiar' : ''} ${link.activated ? 'is-activated' : ''}`}
               style={{
                 '--link-x': `${link.x}%`,
                 '--link-y': `${link.y}%`,
@@ -352,11 +390,24 @@ function TearLibrary({
           ))}
         </div>
 
-        {renderedNodes.length > 0 ? (
-          renderedNodes.map(({ tear, layout }) => (
-            <article
+        <div className="residual-mark-layer" aria-hidden="true">
+          {residualMarks.map((mark) => (
+            <span
+              key={mark.id}
+              className={`residual-mark ${mark.emotion === 'corrupted' ? 'is-corrupted' : ''}`}
+              style={{
+                '--mark-x': `${mark.x}%`,
+                '--mark-y': `${mark.y}%`,
+              }}
+            />
+          ))}
+        </div>
+
+        {enrichedNodes.length > 0 ? (
+          enrichedNodes.map(({ tear, layout, contamination }) => (
+            <div
               key={tear._id || tear.tearId}
-              className={`liquid-node ${tear.corrupted ? 'is-corrupted' : ''} ${tear.systemGenerated ? 'is-system' : ''} ${activeNode === tear.tearId ? 'is-active' : ''}`}
+              className={`liquid-node ${tear.corrupted ? 'is-corrupted' : ''} ${tear.systemGenerated ? 'is-system' : ''} ${tear.isFamiliar ? 'is-familiar' : ''} ${activeNode === tear.tearId ? 'is-active' : ''} ${contamination > 0.34 ? 'is-infected' : ''}`}
               style={{
                 '--node-x': `${layout.x}%`,
                 '--node-y': `${layout.y}%`,
@@ -367,71 +418,117 @@ function TearLibrary({
                 '--node-blur': `${layout.blur}px`,
                 '--node-opacity': layout.opacity,
                 '--node-z': layout.z,
-              }}
-              role="button"
-              tabIndex={0}
-              aria-expanded={activeNode === tear.tearId}
-              onClick={(event) => {
-                event.stopPropagation()
-                setActiveNode((current) =>
-                  current === tear.tearId ? null : tear.tearId
-                )
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  setActiveNode((current) =>
-                    current === tear.tearId ? null : tear.tearId
-                  )
-                }
+                '--contamination': contamination,
               }}
             >
-              <div className="liquid-node-aura" />
-              <div className="liquid-node-body">
-                <div className="liquid-node-core" />
-                <div className="liquid-node-ring liquid-node-ring-a" />
-                <div className="liquid-node-ring liquid-node-ring-b" />
-                <div className="liquid-node-ring liquid-node-ring-c" />
-              </div>
+              <LiquidTearNode
+                tear={tear}
+                active={activeNode === tear.tearId}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  openNode(tear, contamination)
+                }}
+              >
+                {!isMobile ? (
+                  <div className="liquid-node-info">
+                    <span className="tear-id">{tear.tearId}</span>
+                    <p>{tear.text.length > 74 ? `${tear.text.slice(0, 74)}...` : tear.text}</p>
 
-              <div className="liquid-node-info">
-                <span className="tear-id">{tear.tearId}</span>
-                <p>{tear.text.length > 74 ? `${tear.text.slice(0, 74)}...` : tear.text}</p>
+                    <div className="liquid-node-meta">
+                      <span>{tear.emotion}</span>
+                      <span>
+                        {tear.source === 'remote'
+                          ? copy.publicSea
+                          : tear.systemGenerated
+                            ? tear.name || copy.unknownSource
+                            : copy.localResidue}
+                      </span>
+                    </div>
 
-                <div className="liquid-node-meta">
-                  <span>{tear.emotion}</span>
-                  <span>
-                    {tear.source === 'remote'
-                      ? copy.publicSea
-                      : tear.systemGenerated
-                        ? tear.name || copy.unknownSource
-                        : copy.localResidue}
-                  </span>
-                </div>
+                    {tear.isFamiliar ? (
+                      <div className="liquid-node-meta liquid-node-meta-secondary">
+                        <span>{copy.familiar}</span>
+                        <span>{residualSignature?.id?.slice(0, 8)}</span>
+                      </div>
+                    ) : null}
 
-                {tear.systemGenerated ? (
-                  <div className="liquid-node-meta liquid-node-meta-secondary">
-                    <span>{copy.systemClass}</span>
-                    <span>{tear.sourceType || 'synthetic'}</span>
+                    {tear.systemGenerated ? (
+                      <div className="liquid-node-meta liquid-node-meta-secondary">
+                        <span>{copy.systemClass}</span>
+                        <span>{tear.sourceType || 'synthetic'}</span>
+                      </div>
+                    ) : null}
+
+                    <div className="liquid-node-meta liquid-node-meta-secondary">
+                      <span>{copy.contamination}</span>
+                      <span>{Math.round(contamination * 100)}%</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="resonance-btn liquid-resonance-btn"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        handleLike({ ...tear, contamination })
+                      }}
+                    >
+                      {copy.resonate} {tear.likes || 0}
+                    </button>
                   </div>
-                ) : null}
+                ) : (
+                  activeNode === tear.tearId ? (
+                    <div
+                      className={`mobile-inline-tear-info ${layout.x > 50 ? 'align-left' : 'align-right'}`}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <span className="tear-id">{tear.tearId}</span>
+                      <p>{tear.text.length > 46 ? `${tear.text.slice(0, 46)}...` : tear.text}</p>
+                      <div className="mobile-inline-meta">
+                        <span>{tear.emotion}</span>
+                        <span>{Math.round(contamination * 100)}%</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="ghost-btn mini-archive-btn"
+                        onClick={() => setSheetOpen(true)}
+                      >
+                        {copy.more}
+                      </button>
+                    </div>
+                  ) : null
+                )}
+              </LiquidTearNode>
 
-                <button
-                  type="button"
-                  className="resonance-btn liquid-resonance-btn"
+              {isMobile ? (
+                <div
+                  className="mobile-node-touch-layer"
+                  onTouchStart={() => startHold(tear, contamination)}
+                  onTouchEnd={clearHold}
+                  onTouchCancel={clearHold}
+                  onMouseDown={() => startHold(tear, contamination)}
+                  onMouseUp={clearHold}
+                  onMouseLeave={clearHold}
                   onClick={(event) => {
                     event.stopPropagation()
-                    void handleLike(tear)
+                    openNode(tear, contamination)
                   }}
-                >
-                  {copy.resonate} {tear.likes || 0}
-                </button>
-              </div>
-            </article>
+                />
+              ) : null}
+            </div>
           ))
         ) : (
           <div className="library-status">{copy.noTears}</div>
         )}
+
+        {isMobile && sheetOpen ? (
+          <MobileBottomSheet
+            tear={selectedTear}
+            language={language}
+            residualSignature={residualSignature}
+            onResonate={() => selectedTear && handleLike(selectedTear)}
+            onClose={() => setSheetOpen(false)}
+          />
+        ) : null}
       </div>
     </section>
   )
