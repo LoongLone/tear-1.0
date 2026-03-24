@@ -12,16 +12,11 @@ const COPY = {
     resonant: 'Resonant',
     remoteFail: 'Remote sea unreachable. Local and synthetic residues are now visible.',
     scanning: 'Scanning the public sea...',
-    anomaly: 'This tear should not exist.',
-    density: 'density',
-    unknownSource: 'Unknown Source',
-    recoveredFragment: 'Recovered fragment',
-    lost: 'lost to extraction',
     publicSea: 'public sea',
     localResidue: 'local residue',
+    unknownSource: 'Unknown Source',
     noTears: 'No visible tears yet.',
     resonate: 'resonate',
-    systemClass: 'system class',
     familiar: 'familiar trace',
     contamination: 'contamination',
     holdHint: 'hold to resonate',
@@ -34,16 +29,11 @@ const COPY = {
     resonant: '高共振',
     remoteFail: '远端泪海暂时失联。当前展示本地残留与系统异常体。',
     scanning: '正在扫描公共泪海...',
-    anomaly: '这滴泪本不该存在。',
-    density: '密度',
-    unknownSource: '无名来源',
-    recoveredFragment: '幸存碎片',
-    lost: '已被提取吞没',
     publicSea: '公共泪海',
     localResidue: '本地残留',
+    unknownSource: '无名来源',
     noTears: '此刻还没有可见泪滴。',
     resonate: '共振',
-    systemClass: '系统类别',
     familiar: '熟悉残留',
     contamination: '污染值',
     holdHint: '长按共振',
@@ -53,46 +43,50 @@ const COPY = {
 
 function createNodeLayout(index, isMobile) {
   if (isMobile) {
-    const col = index % 2
-    const row = Math.floor(index / 2)
+    const pattern = [
+      { x: 72, y: 10 },
+      { x: 55, y: 18 },
+      { x: 72, y: 28 },
+      { x: 55, y: 38 },
+      { x: 72, y: 49 },
+      { x: 55, y: 61 },
+      { x: 72, y: 74 },
+      { x: 55, y: 87 },
+    ]
+    const base = pattern[index % pattern.length]
+    const cycle = Math.floor(index / pattern.length)
+
     return {
-      x: col === 0 ? 32 : 68,
-      y: 12 + row * 12.6,
-      size: 84 + ((index * 13) % 42),
-      drift: 5 + (index % 4) * 3,
-      delay: (index % 8) * 0.45,
-      duration: 9 + (index % 6) * 1.8,
-      blur: 12 + (index % 5) * 4,
-      opacity: 0.2 + (index % 4) * 0.05,
+      x: base.x + ((index % 3) - 1) * 1.6,
+      y: base.y + cycle * 82,
+      size: 70 + ((index * 9) % 26),
+      drift: 4 + (index % 3) * 2,
+      delay: (index % 7) * 0.35,
+      duration: 7.8 + (index % 5) * 1.2,
+      blur: 10 + (index % 4) * 3,
+      opacity: 0.16 + (index % 4) * 0.05,
       z: 2 + (index % 4),
     }
   }
 
-  const baseX = 11 + ((index * 11.9) % 78)
-  const baseY = 10 + ((index * 16.8) % 74)
-  const size = 88 + ((index * 19) % 94)
-  const drift = 8 + (index % 5) * 4
-  const delay = (index % 9) * 0.6
-  const duration = 10 + (index % 7) * 2.2
-  const blur = 14 + (index % 6) * 6
-  const opacity = 0.18 + (index % 5) * 0.06
-
+  const baseX = 14 + ((index * 11.4) % 74)
+  const baseY = 12 + ((index * 15.8) % 70)
   return {
     x: Math.min(baseX, 88),
     y: Math.min(baseY, 84),
-    size,
-    drift,
-    delay,
-    duration,
-    blur,
-    opacity,
+    size: 84 + ((index * 17) % 86),
+    drift: 8 + (index % 5) * 4,
+    delay: (index % 9) * 0.6,
+    duration: 10 + (index % 7) * 2.2,
+    blur: 14 + (index % 6) * 6,
+    opacity: 0.18 + (index % 5) * 0.06,
     z: 2 + (index % 5),
   }
 }
 
 function buildLinks(nodes, activeNodeId = null) {
   const links = []
-  const maxDistance = 21
+  const maxDistance = 18
 
   for (let i = 0; i < nodes.length; i += 1) {
     for (let j = i + 1; j < nodes.length; j += 1) {
@@ -106,8 +100,6 @@ function buildLinks(nodes, activeNodeId = null) {
         const midX = (a.layout.x + b.layout.x) / 2
         const midY = (a.layout.y + b.layout.y) / 2
         const angle = (Math.atan2(dy, dx) * 180) / Math.PI
-        const corrupted = a.tear.corrupted || b.tear.corrupted
-        const familiar = a.tear.isFamiliar || b.tear.isFamiliar
         const activated =
           activeNodeId &&
           (a.tear.tearId === activeNodeId || b.tear.tearId === activeNodeId)
@@ -118,16 +110,14 @@ function buildLinks(nodes, activeNodeId = null) {
           y: midY,
           width: distance,
           angle,
-          opacity: Number((0.05 + (1 - distance / maxDistance) * 0.22).toFixed(3)),
-          corrupted,
-          familiar,
+          opacity: Number((0.04 + (1 - distance / maxDistance) * 0.16).toFixed(3)),
           activated,
         })
       }
     }
   }
 
-  return links.slice(0, 32)
+  return links.slice(0, 20)
 }
 
 function computeContamination(tear, activeNodeId, nodes) {
@@ -139,10 +129,11 @@ function computeContamination(tear, activeNodeId, nodes) {
   nodes.forEach((node) => {
     if (node.tear.tearId === tear.tearId) return
     if (!node.tear.corrupted) return
+
     const dx = node.layout.x - current.layout.x
     const dy = node.layout.y - current.layout.y
     const distance = Math.sqrt(dx * dx + dy * dy)
-    if (distance < 16) contamination = Math.max(contamination, 1 - distance / 16)
+    if (distance < 14) contamination = Math.max(contamination, 1 - distance / 14)
   })
 
   if (activeNodeId) {
@@ -151,11 +142,23 @@ function computeContamination(tear, activeNodeId, nodes) {
       const dx = active.layout.x - current.layout.x
       const dy = active.layout.y - current.layout.y
       const distance = Math.sqrt(dx * dx + dy * dy)
-      if (distance < 24) contamination = Math.max(contamination, 0.35 + (1 - distance / 24) * 0.5)
+      if (distance < 20) contamination = Math.max(contamination, 0.3 + (1 - distance / 20) * 0.5)
     }
   }
 
   return Number(Math.min(contamination, 1).toFixed(2))
+}
+
+function getInlinePlacement(layout, isMobile) {
+  if (!isMobile) return 'align-right place-center'
+
+  const horizontal =
+    layout.x > 66 ? 'align-left' : layout.x < 42 ? 'align-right' : 'align-center'
+
+  const vertical =
+    layout.y < 18 ? 'place-below' : layout.y > 82 ? 'place-above' : 'place-center'
+
+  return `${horizontal} ${vertical}`
 }
 
 function TearLibrary({
@@ -223,7 +226,7 @@ function TearLibrary({
 
     const combined = Array.from(map.values())
       .sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0))
-      .slice(0, isMobile ? 18 : 40)
+      .slice(0, isMobile ? 12 : 36)
 
     if (featuredTear && !combined.some((item) => item.tearId === featuredTear.tearId)) {
       combined.unshift(featuredTear)
@@ -335,27 +338,6 @@ function TearLibrary({
       {remoteError ? <div className="library-status">{remoteError}</div> : null}
       {loading && allTears.length === 0 ? <div className="library-status">{copy.scanning}</div> : null}
 
-      {!isMobile && featured ? (
-        <article className={`featured-anomaly featured-anomaly-liquid ${featured.corrupted ? 'is-corrupted' : ''}`}>
-          <div className="featured-liquid-core" />
-          <div className="featured-liquid-haze" />
-          <div className="featured-anomaly-copy">
-            <span className="featured-label">{copy.anomaly}</span>
-            <strong className="tear-id">{featured.tearId}</strong>
-            <p className="featured-text">{featured.text}</p>
-            <div className="featured-meta">
-              <span>{featured.emotion}</span>
-              <span>{copy.density} {featured.density || featured.intensity || 0}</span>
-              <span>{featured.systemGenerated ? featured.name || copy.unknownSource : copy.recoveredFragment}</span>
-            </div>
-          </div>
-          <div className="featured-loss-panel">
-            <span>{copy.lost}</span>
-            <p>{featured.lostText || '░01░0░11░0░1'}</p>
-          </div>
-        </article>
-      ) : null}
-
       <div
         className="tear-sea-field liquid-sea-field high-cult-sea"
         onClick={() => {
@@ -371,14 +353,12 @@ function TearLibrary({
         <div className="sea-fog-layer fog-b" />
         <div className="sea-fog-layer fog-c" />
         <div className="sea-runic-grid" />
-        <div className="sea-orbit-trace orbit-a" />
-        <div className="sea-orbit-trace orbit-b" />
 
         <div className="sea-link-layer" aria-hidden="true">
           {links.map((link) => (
             <span
               key={link.id}
-              className={`sea-link ${link.corrupted ? 'is-corrupted' : ''} ${link.familiar ? 'is-familiar' : ''} ${link.activated ? 'is-activated' : ''}`}
+              className={`sea-link ${link.activated ? 'is-activated' : ''}`}
               style={{
                 '--link-x': `${link.x}%`,
                 '--link-y': `${link.y}%`,
@@ -407,7 +387,7 @@ function TearLibrary({
           enrichedNodes.map(({ tear, layout, contamination }) => (
             <div
               key={tear._id || tear.tearId}
-              className={`liquid-node ${tear.corrupted ? 'is-corrupted' : ''} ${tear.systemGenerated ? 'is-system' : ''} ${tear.isFamiliar ? 'is-familiar' : ''} ${activeNode === tear.tearId ? 'is-active' : ''} ${contamination > 0.34 ? 'is-infected' : ''}`}
+              className={`liquid-node ${activeNode === tear.tearId ? 'is-active' : ''} ${contamination > 0.34 ? 'is-infected' : ''}`}
               style={{
                 '--node-x': `${layout.x}%`,
                 '--node-y': `${layout.y}%`,
@@ -429,11 +409,10 @@ function TearLibrary({
                   openNode(tear, contamination)
                 }}
               >
-                {!isMobile ? (
+                {!isMobile && activeNode === tear.tearId ? (
                   <div className="liquid-node-info">
                     <span className="tear-id">{tear.tearId}</span>
                     <p>{tear.text.length > 74 ? `${tear.text.slice(0, 74)}...` : tear.text}</p>
-
                     <div className="liquid-node-meta">
                       <span>{tear.emotion}</span>
                       <span>
@@ -444,26 +423,6 @@ function TearLibrary({
                             : copy.localResidue}
                       </span>
                     </div>
-
-                    {tear.isFamiliar ? (
-                      <div className="liquid-node-meta liquid-node-meta-secondary">
-                        <span>{copy.familiar}</span>
-                        <span>{residualSignature?.id?.slice(0, 8)}</span>
-                      </div>
-                    ) : null}
-
-                    {tear.systemGenerated ? (
-                      <div className="liquid-node-meta liquid-node-meta-secondary">
-                        <span>{copy.systemClass}</span>
-                        <span>{tear.sourceType || 'synthetic'}</span>
-                      </div>
-                    ) : null}
-
-                    <div className="liquid-node-meta liquid-node-meta-secondary">
-                      <span>{copy.contamination}</span>
-                      <span>{Math.round(contamination * 100)}%</span>
-                    </div>
-
                     <button
                       type="button"
                       className="resonance-btn liquid-resonance-btn"
@@ -475,28 +434,28 @@ function TearLibrary({
                       {copy.resonate} {tear.likes || 0}
                     </button>
                   </div>
-                ) : (
-                  activeNode === tear.tearId ? (
-                    <div
-                      className={`mobile-inline-tear-info ${layout.x > 50 ? 'align-left' : 'align-right'}`}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <span className="tear-id">{tear.tearId}</span>
-                      <p>{tear.text.length > 46 ? `${tear.text.slice(0, 46)}...` : tear.text}</p>
-                      <div className="mobile-inline-meta">
-                        <span>{tear.emotion}</span>
-                        <span>{Math.round(contamination * 100)}%</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="ghost-btn mini-archive-btn"
-                        onClick={() => setSheetOpen(true)}
-                      >
-                        {copy.more}
-                      </button>
+                ) : null}
+
+                {isMobile && activeNode === tear.tearId ? (
+                  <div
+                    className={`mobile-inline-tear-info ${getInlinePlacement(layout, isMobile)}`}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <span className="tear-id">{tear.tearId}</span>
+                    <p>{tear.text.length > 42 ? `${tear.text.slice(0, 42)}...` : tear.text}</p>
+                    <div className="mobile-inline-meta">
+                      <span>{tear.emotion}</span>
+                      <span>{Math.round(contamination * 100)}%</span>
                     </div>
-                  ) : null
-                )}
+                    <button
+                      type="button"
+                      className="ghost-btn mini-archive-btn"
+                      onClick={() => setSheetOpen(true)}
+                    >
+                      {copy.more}
+                    </button>
+                  </div>
+                ) : null}
               </LiquidTearNode>
 
               {isMobile ? (

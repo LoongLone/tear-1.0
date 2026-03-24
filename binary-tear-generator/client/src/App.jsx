@@ -3,9 +3,11 @@ import Gate from './components/Gate'
 import ExtractionInput from './components/ExtractionInput'
 import ExtractionSequence from './components/ExtractionSequence'
 import TearArchiveTransition from './components/TearArchiveTransition'
-import TearLibrary from './components/TearLibrary'
-import EmotionMap from './components/EmotionMap'
+import TearCosmos from './components/TearCosmos'
 import VoiceInput from './VoiceInput'
+import { generateTearArtifact } from './utils/emotionArtifact'
+import { generateResonanceVideo } from './utils/resonanceVideo'
+import { generateTearVideo } from './utils/emotionVideo'
 import {
   analyzeEmotion,
   emotionColors,
@@ -258,6 +260,21 @@ function createSystemTearBlueprint(language, residualSignature) {
   }
 }
 
+function chooseResonancePartner(primaryTear, tears) {
+  if (!primaryTear) return null
+
+  const candidates = tears.filter((tear) => tear.tearId !== primaryTear.tearId)
+  if (candidates.length === 0) return primaryTear
+
+  const sameEmotion = candidates.find((tear) => tear.emotion === primaryTear.emotion)
+  if (sameEmotion) return sameEmotion
+
+  const sameSourceType = candidates.find((tear) => tear.sourceType === primaryTear.sourceType)
+  if (sameSourceType) return sameSourceType
+
+  return candidates[0]
+}
+
 function AppTopStrip({ language, setLanguage, residualSignature, watcherLine }) {
   return (
     <div className="mobile-top-strip">
@@ -298,7 +315,6 @@ function MainApp({ language, setLanguage }) {
   const [tearId, setTearId] = useState('')
   const [emotion, setEmotion] = useState('neutral')
   const [saveMessage, setSaveMessage] = useState('')
-  const [libraryRefreshKey, setLibraryRefreshKey] = useState(0)
   const [localTears, setLocalTears] = useState(loadLocalTears)
   const [gifStatus, setGifStatus] = useState('')
   const [isSavingGif, setIsSavingGif] = useState(false)
@@ -317,7 +333,6 @@ function MainApp({ language, setLanguage }) {
     typeof window !== 'undefined' ? window.innerWidth <= 640 : false
   )
   const [mobileInputOpen, setMobileInputOpen] = useState(false)
-  const [residualMarks, setResidualMarks] = useState([])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -372,7 +387,6 @@ function MainApp({ language, setLanguage }) {
         if (current.some((item) => item.tearId === syntheticTear.tearId)) return current
         return [syntheticTear, ...current].slice(0, 48)
       })
-      setLibraryRefreshKey((current) => current + 1)
     }, 18000)
     return () => window.clearInterval(interval)
     // generateTear is intentionally recreated with current language/signature state.
@@ -405,18 +419,6 @@ function MainApp({ language, setLanguage }) {
     emotionColors.neutral
   const isExtracting = mode === 'sequence'
 
-  const observationFeed = useMemo(() => {
-    const recent = localTears.slice(0, 10)
-    return recent.map((tear, index) => {
-      const sector = chooseSector(tear.tearId || `${index}`)
-      return {
-        id: `${tear.tearId}-obs`,
-        city: language === 'zh' ? sector.nameZh : sector.nameEn,
-        emotion: tear.emotion,
-      }
-    })
-  }, [localTears, language])
-
   const persistSignature = (nextSignature) => {
     setResidualSignature(nextSignature)
     if (typeof window !== 'undefined') {
@@ -445,9 +447,7 @@ function MainApp({ language, setLanguage }) {
           )
         )
       }
-
       setSaveMessage(copy.synced)
-      setLibraryRefreshKey((current) => current + 1)
     } catch (error) {
       console.error('save failed:', error)
       setSaveMessage(copy.remoteUnreachable)
@@ -506,24 +506,6 @@ function MainApp({ language, setLanguage }) {
     }
   }
 
-  const injectResidualMark = (tear) => {
-    const sector = chooseSector(`${tear.tearId}-mark`)
-    const mark = {
-      id: `${tear.tearId}-mark`,
-      tearId: tear.tearId,
-      emotion: tear.emotion,
-      intensity: tear.intensity || 0.5,
-      sourceType: tear.sourceType || 'local',
-      x: ((sector.lng + 180) / 360) * 100,
-      y: ((90 - sector.lat) / 180) * 100,
-      bornAt: Date.now(),
-    }
-    setResidualMarks((current) => [mark, ...current].slice(0, 12))
-    setTimeout(() => {
-      setResidualMarks((current) => current.filter((item) => item.id !== mark.id))
-    }, 9000)
-  }
-
   const handleExtract = async (rawText) => {
     const normalizedText = rawText.trim()
     if (!normalizedText || isExtracting) return
@@ -553,6 +535,8 @@ function MainApp({ language, setLanguage }) {
       nextTear,
       ...current.filter((item) => item.tearId !== nextTear.tearId),
     ])
+    generateTearArtifact(nextTear)
+    void generateTearVideo(nextTear)
 
     const nextSignature = {
       ...(residualSignature || ensureResidualSignature(language)),
@@ -577,8 +561,12 @@ function MainApp({ language, setLanguage }) {
   }
 
   const handleTransitionComplete = () => {
-    if (tearData) injectResidualMark(tearData)
-    setLibraryRefreshKey((current) => current + 1)
+    if (tearData) {
+      const partner = chooseResonancePartner(tearData, localTears)
+      if (partner) {
+        void generateResonanceVideo(tearData, partner)
+      }
+    }
     setMode('archive')
   }
 
@@ -848,16 +836,11 @@ function MainApp({ language, setLanguage }) {
             </div>
           </div>
 
-          <EmotionMap language={language} observations={observationFeed} />
-
-          <TearLibrary
+          <TearCosmos
+            tears={localTears}
             language={language}
-            featuredTear={tearData}
-            localTears={localTears}
-            refreshKey={libraryRefreshKey}
-            residualSignature={residualSignature}
-            isMobile={isMobile}
-            residualMarks={residualMarks}
+            currentTearId={tearData?.tearId || ''}
+            onTearsChange={(nextTears) => setLocalTears(nextTears)}
           />
         </main>
       )}

@@ -5397,6 +5397,597 @@ button { cursor: pointer; }
   }
 }
 
+@media (max-width: 640px) {
+  .mobile-top-strip {
+    min-height: 46px;
+    padding: 8px 10px;
+    background:
+      linear-gradient(180deg, rgba(3,6,12,0.72), rgba(3,6,12,0.18), transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-signature-chip {
+    min-width: 56px;
+    height: 26px;
+    padding: 0 8px;
+    font-size: 9px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .mobile-watcher-line {
+    font-size: 10px;
+    color: rgba(255,255,255,0.52);
+  }
+
+  .archive-view-mobile {
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .archive-view-mobile .archive-header {
+    padding-left: 12px;
+    padding-right: 12px;
+    margin-bottom: 10px;
+  }
+
+  .archive-view-mobile .archive-header h2 {
+    font-size: 1rem;
+    line-height: 1.15;
+  }
+
+  .archive-view-mobile .archive-header-actions {
+    display: none;
+  }
+
+  .observation-band {
+    margin: 0 12px 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.024), rgba(255,255,255,0.008)),
+      rgba(4,7,14,0.34);
+    border: 1px solid rgba(255,255,255,0.04);
+    box-shadow: none;
+  }
+
+  .observation-band-copy {
+    margin-bottom: 8px;
+  }
+
+  .observation-band-copy h3 {
+    font-size: 0.88rem;
+  }
+
+  .observation-stream {
+    min-height: 40px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.015);
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .observation-stream strong {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .mobile-archive-library {
+    margin: 0;
+    border: 0;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  .mobile-archive-library .library-topline {
+    padding: 0 12px;
+    margin-bottom: 8px;
+  }
+
+  .mobile-archive-library .library-topline h3 {
+    font-size: 1rem;
+  }
+
+  .mobile-archive-library .library-controls .ghost-btn {
+    min-width: 62px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .mobile-archive-hint {
+    margin: 0 12px 8px;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .mobile-archive-library .tear-sea-field {
+    min-height: 1180px;
+    margin: 0;
+    padding: 0 0 170px;
+    border-radius: 0;
+    border: 0;
+    background:
+      radial-gradient(circle at 56% 16%, rgba(72, 94, 170, 0.08), transparent 24%),
+      radial-gradient(circle at 48% 82%, rgba(32, 48, 98, 0.08), transparent 36%),
+      linear-gradient(180deg, #01040c 0%, #020611 34%, #01050e 100%);
+    overflow: visible;
+    box-shadow: none;
+  }
+
+  .mobile-archive-library .tear-sea-field::before,
+  .mobile-archive-library .tear-sea-field::after,
+  .mobile-archive-library .sea-orbit-trace,
+  .mobile-archive-library .sea-runic-grid {
+    opacity: 0.12;
+  }
+
+  .mobile-archive-library .sea-link {
+    opacity: calc(var(--link-opacity) * 0.52);
+  }
+}
+
+@media (max-width: 640px) {
+  .mobile-inline-tear-info {
+    position: absolute;
+    width: 132px;
+    min-height: 84px;
+    padding: 9px 10px;
+    border-radius: 12px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.016)),
+      rgba(7,10,18,0.9);
+    border: 1px solid rgba(255,255,255,0.07);
+    box-shadow:
+      0 10px 30px rgba(0,0,0,0.26),
+      inset 0 1px 0 rgba(255,255,255,0.03);
+    backdrop-filter: blur(12px);
+    z-index: 56;
+  }
+
+  .mobile-inline-tear-info.align-right {
+    left: calc(100% + 8px);
+  }
+
+  .mobile-inline-tear-info.align-left {
+    right: calc(100% + 8px);
+  }
+
+  .mobile-inline-tear-info.align-center {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .mobile-inline-tear-info.place-above {
+    bottom: calc(100% + 8px);
+  }
+
+  .mobile-inline-tear-info.place-below {
+    top: calc(100% + 8px);
+  }
+
+  .mobile-inline-tear-info.place-center {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .mobile-inline-tear-info.align-center.place-center {
+    transform: translate(-50%, -50%);
+  }
+
+  .mobile-inline-tear-info.align-center.place-above {
+    transform: translateX(-50%);
+  }
+
+  .mobile-inline-tear-info.align-center.place-below {
+    transform: translateX(-50%);
+  }
+
+  .mobile-inline-tear-info p {
+    margin: 5px 0 8px;
+    font-size: 10px;
+    line-height: 1.38;
+    color: rgba(255,255,255,0.82);
+  }
+
+  .mobile-inline-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 9px;
+    color: rgba(255,255,255,0.56);
+  }
+
+  .mini-archive-btn {
+    width: 100%;
+    min-height: 28px;
+    margin-top: 8px;
+    border-radius: 9px;
+    font-size: 9px;
+  }
+}
+
+.tear-liquid {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.tear-liquid-shadow {
+  position: absolute;
+  inset: 26%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,0,0,0.34), transparent 74%);
+  filter: blur(14px);
+  transform: translateY(12px) scale(1.08);
+  opacity: 0.62;
+}
+
+.tear-liquid-body,
+.tear-liquid-core,
+.tear-liquid-sheen,
+.tear-liquid-aura {
+  position: absolute;
+  pointer-events: none;
+}
+
+.tear-liquid-aura {
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(184, 202, 255, 0.12), transparent 72%);
+  filter: blur(18px);
+  opacity: 0.62;
+}
+
+.tear-liquid-core {
+  left: 50%;
+  top: 50%;
+  width: 16%;
+  height: 16%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(186, 204, 255, 0.22), transparent 74%);
+  box-shadow: 0 0 14px rgba(255,255,255,0.34);
+}
+
+.tear-liquid-sheen {
+  inset: 0;
+  background: radial-gradient(circle at 34% 26%, rgba(255,255,255,0.16), transparent 26%);
+  opacity: 0.68;
+}
+
+.tear-liquid-clear .tear-liquid-body {
+  inset: 20%;
+  border-radius: 48% 52% 52% 48% / 62% 42% 58% 38%;
+  background:
+    radial-gradient(circle at 38% 28%, rgba(255,255,255,0.1), transparent 24%),
+    rgba(206, 216, 246, 0.05);
+  border: 1px solid rgba(220, 232, 255, 0.08);
+  backdrop-filter: blur(10px);
+  transform: scaleY(1.08);
+}
+
+.tear-liquid-heavy .tear-liquid-body {
+  inset: 17%;
+  border-radius: 46% 54% 48% 52% / 36% 38% 62% 64%;
+  background:
+    radial-gradient(circle at 38% 24%, rgba(255,255,255,0.12), transparent 24%),
+    rgba(36, 48, 90, 0.54);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 20px rgba(126, 152, 255, 0.08);
+  transform: scaleY(1.16);
+}
+
+.tear-liquid-fractured .tear-liquid-body {
+  inset: 18%;
+  border-radius: 42% 58% 46% 54% / 32% 36% 68% 64%;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.14), rgba(104,134,232,0.08), rgba(255,255,255,0.02));
+  clip-path: polygon(28% 0%, 74% 8%, 92% 40%, 78% 100%, 22% 94%, 6% 48%);
+  transform: scaleY(1.1);
+}
+
+.tear-liquid-crack {
+  position: absolute;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0));
+  opacity: 0.42;
+}
+
+.crack-a {
+  left: 48%;
+  top: 26%;
+  height: 36%;
+  transform: rotate(18deg);
+}
+
+.crack-b {
+  left: 58%;
+  top: 42%;
+  height: 18%;
+  transform: rotate(-24deg);
+}
+
+.tear-liquid-stained .tear-liquid-body {
+  inset: 17%;
+  border-radius: 46% 54% 48% 52% / 34% 38% 66% 62%;
+  background:
+    radial-gradient(circle at 38% 24%, rgba(255,255,255,0.08), transparent 20%),
+    rgba(58, 10, 24, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 0 24px rgba(142, 24, 58, 0.16);
+  transform: scaleY(1.18);
+}
+
+.tear-liquid-stained .tear-liquid-core {
+  background: radial-gradient(circle, rgba(255,255,255,0.84), rgba(196, 78, 116, 0.28), transparent 74%);
+}
+
+.tear-liquid-stain {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(8px);
+  opacity: 0.48;
+}
+
+.stain-a {
+  inset: 12% 18% 32% 24%;
+  background: radial-gradient(circle, rgba(168, 34, 72, 0.18), transparent 70%);
+}
+
+.stain-b {
+  inset: 36% 24% 14% 20%;
+  background: radial-gradient(circle, rgba(120, 0, 32, 0.14), transparent 70%);
+}
+
+.tear-liquid-echo .tear-liquid-body {
+  inset: 20%;
+  border-radius: 46% 54% 48% 52% / 40% 42% 60% 58%;
+  background:
+    radial-gradient(circle at 38% 28%, rgba(255,255,255,0.08), transparent 22%),
+    rgba(40, 52, 86, 0.18);
+  border: 1px solid rgba(224, 234, 255, 0.12);
+  transform: scaleY(1.02);
+}
+
+.tear-liquid-ring {
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  border: 1px solid rgba(222, 232, 255, 0.1);
+  opacity: 0.22;
+  animation: tearEcho 8s linear infinite;
+}
+
+.ring-a {
+  transform: scale(1.05);
+}
+
+.ring-b {
+  transform: scale(0.78);
+  animation-direction: reverse;
+}
+
+.tear-liquid.is-active {
+  transform: scale(1.1);
+}
+
+.tear-liquid.is-active .tear-liquid-aura {
+  opacity: 0.96;
+}
+
+.tear-liquid.is-familiar .tear-liquid-aura {
+  background: radial-gradient(circle, rgba(204, 220, 255, 0.18), transparent 72%);
+}
+
+@keyframes tearEcho {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+.tear-cosmos-shell {
+  position: relative;
+  min-height: 78vh;
+  padding: 16px 12px 24px;
+}
+
+.tear-cosmos-head {
+  position: relative;
+  z-index: 4;
+  margin-bottom: 12px;
+}
+
+.tear-cosmos-head h2 {
+  margin: 6px 0 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.72);
+}
+
+.cosmos-message {
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(255,180,180,0.9);
+}
+
+.tear-cosmos-stage {
+  position: relative;
+  min-height: 72vh;
+  overflow: hidden;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(30,50,110,0.12), transparent 40%),
+    linear-gradient(180deg, #02050d, #01030a 100%);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.tear-cosmos-field {
+  position: relative;
+  width: 2400px;
+  height: 2400px;
+  transform-origin: center;
+}
+
+.cosmos-tear {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.cosmos-tear-core {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.96), rgba(180,205,255,0.28), transparent 74%);
+  box-shadow: 0 0 18px rgba(255,255,255,0.35);
+}
+
+.cosmos-tear-halo {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(120,150,255,calc(var(--luminosity) * 0.25)), transparent 72%);
+  filter: blur(10px);
+}
+
+.cosmos-tear-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1px solid rgba(200,220,255,0.08);
+}
+
+.cosmos-tear-label {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.36);
+  white-space: nowrap;
+}
+
+.cosmos-tear.is-normal .cosmos-tear-core {
+  transform: scaleY(1.08);
+}
+
+.cosmos-tear.is-bright .cosmos-tear-halo {
+  background: radial-gradient(circle, rgba(176,206,255,0.24), transparent 72%);
+}
+
+.cosmos-tear.is-echo .cosmos-tear-ring {
+  animation: cosmosEcho 6s linear infinite;
+}
+
+.cosmos-tear.is-fragile .cosmos-tear-core {
+  opacity: 0.62;
+}
+
+.cosmos-tear.is-stained .cosmos-tear-core {
+  background: radial-gradient(circle, rgba(255,220,230,0.82), rgba(160,40,80,0.34), transparent 74%);
+}
+
+.cosmos-tear.is-dried .cosmos-tear-core {
+  background: radial-gradient(circle, rgba(170,170,170,0.28), rgba(80,80,90,0.12), transparent 74%);
+  box-shadow: none;
+}
+
+.cosmos-tear.is-dried .cosmos-tear-halo {
+  opacity: 0.12;
+}
+
+.cosmos-tear.is-selected {
+  z-index: 30;
+}
+
+.cosmos-tear-panel {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 14px);
+  transform: translateX(-50%);
+  width: 220px;
+  padding: 12px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015)),
+    rgba(8,10,18,0.94);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.32);
+  backdrop-filter: blur(16px);
+}
+
+.cosmos-tear-panel p {
+  margin: 8px 0 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255,255,255,0.84);
+}
+
+.cosmos-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.6);
+}
+
+.cosmos-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.cosmos-actions .ghost-btn {
+  flex: 1;
+  min-height: 34px;
+}
+
+.cosmos-dried-tag {
+  margin-top: 10px;
+  font-size: 11px;
+  color: rgba(255,180,180,0.86);
+}
+
+@keyframes cosmosEcho {
+  from { transform: scale(1); opacity: 0.26; }
+  to { transform: scale(1.5); opacity: 0; }
+}
+
+@media (max-width: 640px) {
+  .tear-cosmos-shell {
+    padding: 10px 0 18px;
+  }
+
+  .tear-cosmos-head {
+    padding: 0 12px;
+  }
+
+  .tear-cosmos-stage {
+    min-height: 78svh;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .cosmos-tear-panel {
+    width: 190px;
+    padding: 10px;
+  }
+
+  .cosmos-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
 .mobile-bottom-sheet {
   position: fixed;
   left: 10px;
@@ -7252,5 +7843,153 @@ body,
     right: 10px;
     bottom: 10px;
     gap: 8px;
+  }
+}
+
+/* ===== cosmos tear life states refinement ===== */
+
+.cosmos-tear.is-fragile .cosmos-tear-core {
+  opacity: 0.72;
+  transform: scale(0.88);
+}
+
+.cosmos-tear.is-fragile .cosmos-tear-halo {
+  opacity: 0.28;
+  filter: blur(12px);
+}
+
+.cosmos-tear.is-fragile .cosmos-tear-ring {
+  border-color: rgba(210, 220, 255, 0.05);
+}
+
+.cosmos-tear.is-withering .cosmos-tear-core {
+  opacity: 0.42;
+  transform: scale(0.72);
+  background: radial-gradient(circle, rgba(210,210,220,0.42), rgba(86,90,110,0.12), transparent 74%);
+  box-shadow: 0 0 8px rgba(255,255,255,0.08);
+}
+
+.cosmos-tear.is-withering .cosmos-tear-halo {
+  opacity: 0.12;
+  filter: blur(10px);
+}
+
+.cosmos-tear.is-withering .cosmos-tear-ring {
+  border-color: rgba(200, 210, 230, 0.03);
+  border-style: dashed;
+}
+
+.cosmos-tear.is-withering::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px dashed rgba(190, 200, 220, 0.06);
+  transform: scale(1.22) rotate(8deg);
+}
+
+.cosmos-tear.is-dried .cosmos-tear-core {
+  inset: 12px;
+  opacity: 0.22;
+  transform: scale(0.56);
+  background: radial-gradient(circle, rgba(150,150,158,0.18), rgba(70,70,80,0.08), transparent 76%);
+  box-shadow: none;
+}
+
+.cosmos-tear.is-dried .cosmos-tear-halo {
+  opacity: 0.04;
+  filter: blur(8px);
+}
+
+.cosmos-tear.is-dried .cosmos-tear-ring {
+  border-color: rgba(170, 176, 196, 0.04);
+  border-style: dotted;
+}
+
+.cosmos-tear.is-dried::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 1px solid rgba(180, 186, 206, 0.03);
+  transform: scale(1.38);
+}
+
+.cosmos-tear.is-dried .cosmos-tear-label {
+  color: rgba(255,255,255,0.18);
+}
+
+/* ===== dying event ===== */
+
+.cosmos-tear.is-dying-now {
+  animation: tearDeathFlash 1.05s ease-out;
+}
+
+.cosmos-tear.is-dying-now .cosmos-tear-core {
+  animation: tearDeathCore 1.05s ease-out;
+}
+
+.cosmos-tear.is-dying-now .cosmos-tear-halo {
+  animation: tearDeathHalo 1.05s ease-out;
+}
+
+.cosmos-tear.is-dying-now .cosmos-tear-ring {
+  animation: tearDeathRing 1.05s ease-out;
+}
+
+@keyframes tearDeathFlash {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  20% {
+    transform: translate(-50%, -50%) scale(1.16);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes tearDeathCore {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  25% {
+    opacity: 0.9;
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 0.2;
+    filter: blur(0.5px);
+  }
+}
+
+@keyframes tearDeathHalo {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  30% {
+    opacity: 0.34;
+    transform: scale(1.48);
+  }
+  100% {
+    opacity: 0.04;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes tearDeathRing {
+  0% {
+    opacity: 0.28;
+    border-style: solid;
+  }
+  40% {
+    opacity: 0.12;
+    border-style: dashed;
+  }
+  100% {
+    opacity: 0.04;
+    border-style: dotted;
   }
 }

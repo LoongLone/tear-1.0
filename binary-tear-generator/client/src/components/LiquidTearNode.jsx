@@ -1,20 +1,13 @@
-function classifyTearForm(tear) {
+function classifyTearState(tear) {
   const source = tear.sourceType || ''
   const emotion = tear.emotion || ''
+  const contamination = tear.corrupted || source === 'corruption'
 
-  if (source === 'corruption' || emotion === 'corrupted' || emotion === 'despair') {
-    return 'parasite'
-  }
-  if (source === 'error' || source === 'degradation' || emotion === 'anxiety') {
-    return 'shard'
-  }
-  if (source === 'blank' || emotion === 'void' || emotion === 'neutral') {
-    return 'veil'
-  }
-  if (source === 'echo' || source === 'surveillance' || tear.isFamiliar) {
-    return 'halo'
-  }
-  return 'embryo'
+  if (contamination) return 'stained'
+  if (source === 'error' || source === 'degradation' || emotion === 'anxiety') return 'fractured'
+  if (source === 'echo' || source === 'surveillance' || tear.isFamiliar) return 'echo'
+  if (source === 'blank' || emotion === 'void') return 'clear'
+  return 'heavy'
 }
 
 function LiquidTearNode({
@@ -26,19 +19,16 @@ function LiquidTearNode({
   style,
   ...rest
 }) {
-  const form = classifyTearForm(tear)
-  const isCorrupted = tear.corrupted || tear.sourceType === 'corruption'
+  const state = classifyTearState(tear)
 
   return (
     <div
       className={[
-        'tear-form',
-        'liquid-node-shell',
-        `tear-form-${form}`,
-        isCorrupted ? 'is-corrupted' : '',
+        'tear-liquid',
+        `tear-liquid-${state}`,
+        active ? 'is-active' : '',
         tear.systemGenerated ? 'is-system' : '',
         tear.isFamiliar ? 'is-familiar' : '',
-        active ? 'is-active' : '',
         className,
       ]
         .filter(Boolean)
@@ -47,38 +37,30 @@ function LiquidTearNode({
       onClick={onClick}
       {...rest}
     >
-      <div className="tear-form-shadow" />
-      <div className="tear-form-body" />
-      <div className="tear-form-core" />
-      <div className="tear-form-aura" />
-      <div className="tear-form-sheen" />
+      <div className="tear-liquid-shadow" />
+      <div className="tear-liquid-body" />
+      <div className="tear-liquid-core" />
+      <div className="tear-liquid-sheen" />
+      <div className="tear-liquid-aura" />
 
-      {form === 'parasite' ? (
+      {state === 'fractured' ? (
         <>
-          <div className="tear-form-tendril tendril-a" />
-          <div className="tear-form-tendril tendril-b" />
-          <div className="tear-form-tendril tendril-c" />
+          <div className="tear-liquid-crack crack-a" />
+          <div className="tear-liquid-crack crack-b" />
         </>
       ) : null}
 
-      {form === 'halo' ? (
+      {state === 'stained' ? (
         <>
-          <div className="tear-form-ring ring-a" />
-          <div className="tear-form-ring ring-b" />
+          <div className="tear-liquid-stain stain-a" />
+          <div className="tear-liquid-stain stain-b" />
         </>
       ) : null}
 
-      {form === 'shard' ? (
+      {state === 'echo' ? (
         <>
-          <div className="tear-form-fracture fracture-a" />
-          <div className="tear-form-fracture fracture-b" />
-        </>
-      ) : null}
-
-      {form === 'veil' ? (
-        <>
-          <div className="tear-form-membrane membrane-a" />
-          <div className="tear-form-membrane membrane-b" />
+          <div className="tear-liquid-ring ring-a" />
+          <div className="tear-liquid-ring ring-b" />
         </>
       ) : null}
 
