@@ -10,6 +10,13 @@ const BACKUP_TEARS = [
 ]
 
 const GLITCH_CHARS = 'xwarmubfamuvzbhldcvezgu/zruoenziaishmosh14kiofakoihl'
+const DRIFTING_STATUS = '[ STATUS: DRIFTING_IN_VOID ]'
+
+const GHOST_CHAMBERS = [
+  { id: 'A01', x: 0.24, y: 0.37, radius: 78, phase: 0.8 },
+  { id: 'M14', x: 0.67, y: 0.43, radius: 104, phase: 2.4 },
+  { id: 'V09', x: 0.47, y: 0.62, radius: 88, phase: 4.2 },
+]
 
 function randomGlitchCharacter() {
   return GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)]
@@ -49,11 +56,16 @@ function createTextParticles(text, width, height) {
       particles.push({
         x: originX + x,
         y: originY + y,
+        originX: originX + x,
+        originY: originY + y,
         vx: (Math.random() - 0.5) * 1.1,
         vy: -0.65 - Math.random() * 1.05,
         alpha: 0.92,
         radius: 0.8 + Math.random() * 1.6,
         life: 108 + Math.random() * 62,
+        glitchOffset: Math.random() * Math.PI * 12,
+        targetAngle: Math.random() * Math.PI * 2,
+        targetRadiusFactor: 0.44 + Math.random() * 0.34,
       })
     }
   }
@@ -69,6 +81,7 @@ function LiquidField({ emission }) {
     particles: [],
     cloudGrowth: 0,
     lastEmissionId: null,
+    activeChamberId: null,
   })
 
   useEffect(() => {
@@ -89,6 +102,15 @@ function LiquidField({ emission }) {
     let height = 0
     let pixelRatio = 1
     const pointer = { x: 0.5, y: 0.5, driftX: 0.5, driftY: 0.5, active: false }
+    const chambers = GHOST_CHAMBERS.map((chamber) => ({
+      ...chamber,
+      proximity: 0,
+      glyphs: Array.from({ length: 18 }, (_, index) => ({
+        angle: (Math.PI * 2 * index) / 18,
+        offset: 0.56 + ((index * 7) % 13) / 30,
+        char: GLITCH_CHARS[(index * 5 + chamber.id.length) % GLITCH_CHARS.length],
+      })),
+    }))
     const splats = Array.from({ length: 30 }, (_, index) => ({
       x: 0.25 + ((index * 0.113) % 0.52),
       y: 0.84 + ((index * 0.071) % 0.2),
@@ -119,6 +141,13 @@ function LiquidField({ emission }) {
       pointer.active = false
     }
 
+    const publishChamberStatus = (chamber) => {
+      const status = chamber
+        ? `[ SIGNAL_MUTATION: ENGAGING_CHAMBER_${chamber.id} ]`
+        : DRIFTING_STATUS
+      window.dispatchEvent(new CustomEvent('novon:chamber-status', { detail: status }))
+    }
+
     const draw = (time) => {
       const t = time * 0.001
       context.fillStyle = '#0a0a0a'
@@ -135,6 +164,60 @@ function LiquidField({ emission }) {
       pointer.driftY += (pointer.y - pointer.driftY) * 0.15
       const distortionX = pointer.active ? (pointer.driftX - 0.5) * width * 0.07 : 0
       const distortionY = pointer.active ? (pointer.driftY - 0.5) * height * 0.035 : 0
+      const observerX = pointer.driftX * width
+      const observerY = pointer.driftY * height
+      const whisperThreshold = Math.min(width, height) * 0.23
+      let activeChamber = null
+      let nearestDistance = Number.POSITIVE_INFINITY
+
+      chambers.forEach((chamber) => {
+        const x = chamber.x * width + Math.sin(t * 0.12 + chamber.phase) * 18
+        const y = chamber.y * height + Math.cos(t * 0.14 + chamber.phase) * 12
+        const distance = pointer.active
+          ? Math.sqrt((observerX - x) ** 2 + (observerY - y) ** 2)
+          : Number.POSITIVE_INFINITY
+        const targetProximity = Math.max(0, 1 - distance / whisperThreshold)
+        chamber.proximity += (targetProximity - chamber.proximity) * 0.09
+        chamber.renderX = x
+        chamber.renderY = y
+
+        if (distance < whisperThreshold && distance < nearestDistance) {
+          nearestDistance = distance
+          activeChamber = chamber
+        }
+
+        const size = chamber.radius * (1 + chamber.proximity * 0.22)
+        const cloud = context.createRadialGradient(x, y, 1, x, y, size)
+        cloud.addColorStop(0, `rgba(168, 255, 178, ${0.025 + chamber.proximity * 0.14})`)
+        cloud.addColorStop(0.42, `rgba(90, 142, 96, ${0.02 + chamber.proximity * 0.06})`)
+        cloud.addColorStop(1, 'rgba(10, 10, 10, 0)')
+        context.fillStyle = cloud
+        context.beginPath()
+        context.ellipse(x, y, size, size * 0.7, Math.sin(chamber.phase) * 0.3, 0, Math.PI * 2)
+        context.fill()
+
+        if (chamber.proximity > 0.035) {
+          context.font = `${9 + chamber.proximity * 4}px "Courier New", monospace`
+          context.textAlign = 'center'
+          context.textBaseline = 'middle'
+          chamber.glyphs.forEach((glyph, index) => {
+            const crawl = glyph.angle + t * (0.08 + chamber.proximity * 0.14) + index * 0.02
+            const surface = size * (glyph.offset - chamber.proximity * 0.18)
+            context.fillStyle = `rgba(168, 255, 178, ${chamber.proximity * (0.18 + (index % 4) * 0.06)})`
+            context.fillText(
+              glyph.char,
+              x + Math.cos(crawl) * surface,
+              y + Math.sin(crawl) * surface * 0.68
+            )
+          })
+        }
+      })
+
+      const nextChamberId = activeChamber?.id || null
+      if (nextChamberId !== simulation.activeChamberId) {
+        simulation.activeChamberId = nextChamberId
+        publishChamberStatus(activeChamber)
+      }
 
       splats.forEach((splat, index) => {
         const growth = 1 + simulation.cloudGrowth * 0.025
@@ -170,8 +253,8 @@ function LiquidField({ emission }) {
         context.fill()
       }
 
-      const repelX = pointer.driftX * width
-      const repelY = pointer.driftY * height
+      const repelX = observerX
+      const repelY = observerY
       let expiredCount = 0
       simulation.particles = simulation.particles.filter((particle) => {
         if (pointer.active) {
@@ -198,9 +281,34 @@ function LiquidField({ emission }) {
           return false
         }
 
-        context.fillStyle = `rgba(168, 255, 178, ${particle.alpha})`
+        const driftingX = particle.x + Math.sin(t * 0.5 + particle.glitchOffset) * 8
+        const driftingY = particle.y + Math.cos(t * 0.3 + particle.glitchOffset) * 8
+        const proximity = activeChamber?.proximity || 0
+        let renderX = driftingX
+        let renderY = driftingY
+
+        if (activeChamber) {
+          const surfaceRadius = activeChamber.radius * particle.targetRadiusFactor
+          const targetX =
+            activeChamber.renderX + Math.cos(particle.targetAngle) * surfaceRadius
+          const targetY =
+            activeChamber.renderY + Math.sin(particle.targetAngle) * surfaceRadius * 0.68
+          renderX = driftingX + (targetX - driftingX) * proximity
+          renderY = driftingY + (targetY - driftingY) * proximity
+
+          const glitchSeed = Math.sin(particle.glitchOffset) % 1
+          if (proximity > 0.1 && proximity < 0.9 && glitchSeed > 0.82) {
+            renderX += Math.sin(t * 20) * 5
+          }
+        }
+
+        const flicker = 0.5 + Math.sin(t * 2 + particle.glitchOffset) * 0.5
+        const mossAlpha = (0.1 + proximity * 0.7) * (0.55 + flicker * 0.45)
+        const drawAlpha = Math.min(particle.alpha, Math.max(particle.alpha * 0.35, mossAlpha))
+        const pointSize = particle.radius * (0.72 + flicker * 0.8 + proximity * 1.7)
+        context.fillStyle = `rgba(168, 255, 178, ${drawAlpha})`
         context.beginPath()
-        context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2)
+        context.arc(renderX, renderY, pointSize, 0, Math.PI * 2)
         context.fill()
         return true
       })
@@ -223,6 +331,7 @@ function LiquidField({ emission }) {
       window.removeEventListener('resize', resize)
       window.removeEventListener('pointermove', onPointerMove)
       document.removeEventListener('pointerleave', onPointerLeave)
+      window.dispatchEvent(new CustomEvent('novon:chamber-status', { detail: DRIFTING_STATUS }))
     }
   }, [])
 
@@ -232,11 +341,20 @@ function LiquidField({ emission }) {
 function App() {
   const [value, setValue] = useState('')
   const [feedback, setFeedback] = useState('AWAITING_EMISSION')
+  const [systemStatus, setSystemStatus] = useState('[ STATUS: ARRHYTHMIA ]')
   const [stream, setStream] = useState([])
   const [emission, setEmission] = useState(null)
   const sequenceRef = useRef(0)
   const feedbackTimerRef = useRef(null)
   const streamTimersRef = useRef([])
+
+  useEffect(() => {
+    const onChamberStatus = (event) => {
+      setSystemStatus(event.detail)
+    }
+    window.addEventListener('novon:chamber-status', onChamberStatus)
+    return () => window.removeEventListener('novon:chamber-status', onChamberStatus)
+  }, [])
 
   useEffect(() => {
     let loopTimer
@@ -341,7 +459,7 @@ function App() {
           <span className="glitch-text" data-text="NOVON // SYSTEM_OVERFLOW_MONITOR">
             NØVØN // SYSTEM_OVERFLOW_MONITOR
           </span>
-          <span id="sys-status">[ STATUS: ARRHYTHMIA ]</span>
+          <span id="sys-status">{systemStatus}</span>
         </header>
 
         <section id="entropy-inflow" className="monitor-box">
